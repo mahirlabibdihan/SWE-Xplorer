@@ -465,7 +465,6 @@ def main(
 
     if redo_exit_status is not None:
         before_fix_filter = len(instances_to_process)
-        before_repro_filter = len(instances_to_reproduce)
 
         fix_missing_traj_count = 0
         fix_matching_status_count = 0
@@ -496,15 +495,10 @@ def main(
                 filtered_repro_instances.append(instance)
 
         instances_to_process = filtered_fix_instances
-        instances_to_reproduce = filtered_repro_instances
 
         logger.info(
             f"Fix exit status filter '{redo_exit_status}': {before_fix_filter} -> {len(instances_to_process)} instances "
             f"({fix_matching_status_count} matched status, {fix_missing_traj_count} missing traj)"
-        )
-        logger.info(
-            f"Reproduction exit status filter '{redo_exit_status}': {before_repro_filter} -> {len(instances_to_reproduce)} instances "
-            f"({repro_matching_status_count} matched status, {repro_missing_traj_count} missing traj)"
         )
 
     # Check for existing fix results
@@ -525,7 +519,7 @@ def main(
 
     # Check for existing reproduction results; this is controlled separately from redo_existing.
     reproduction_patch_files = sorted(reproductions_dir.glob("*.patch"))
-    if redo_exit_status is None and not redo_existing_repro and reproduction_patch_files:
+    if not redo_existing_repro and reproduction_patch_files:
         reproductions_data = _load_reproduction_results(reproductions_dir)
         existing_repro_ids = {r.get("instance_id") for r in reproductions_data}
         redo_repro_ids = {
