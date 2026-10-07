@@ -53,8 +53,8 @@ Requirements:
 Clone with the pinned experiment dependencies:
 
 ```bash
-git clone --recurse-submodules https://github.com/mahirlabibdihan/mini-swe-agent.git
-cd mini-swe-agent
+git clone --recurse-submodules https://github.com/mahirlabibdihan/SWE-Xplorer.git
+cd SWE-Xplorer
 ```
 
 For an existing clone:

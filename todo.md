@@ -1,0 +1,1 @@
+- On pier environment, reproduction patch is effectively disabled. So, keep shape_reward: false for deepswe.
