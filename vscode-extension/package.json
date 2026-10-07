@@ -1,0 +1,202 @@
+{
+  "name": "swe-xplorer",
+  "displayName": "SWE-Xplorer",
+  "description": "A tree-search coding agent in your sidebar: explore, reconcile, prune, and review the winning patch.",
+  "version": "0.1.6",
+  "publisher": "mahirlabibdihan",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahirlabibdihan/SWE-Xplorer"
+  },
+  "homepage": "https://mahirlabibdihan.github.io/SWE-Xplorer/",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "agent",
+    "coding agent",
+    "tree search",
+    "swe-bench",
+    "llm"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sweXplorer",
+          "title": "SWE-X",
+          "icon": "media/activity.svg",
+          "when": "sweXplorer.noSecondarySidebar"
+        }
+      ],
+      "secondarySidebar": [
+        {
+          "id": "sweXplorerSecondary",
+          "title": "SWE-X",
+          "icon": "media/activity.svg",
+          "when": "!sweXplorer.noSecondarySidebar"
+        }
+      ]
+    },
+    "views": {
+      "sweXplorer": [
+        {
+          "type": "webview",
+          "id": "sweXplorer.chat",
+          "name": "SWE-X",
+          "when": "sweXplorer.noSecondarySidebar"
+        }
+      ],
+      "sweXplorerSecondary": [
+        {
+          "type": "webview",
+          "id": "sweXplorer.chatSecondary",
+          "name": "SWE-X",
+          "when": "!sweXplorer.noSecondarySidebar"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sweXplorer.newChat",
+        "title": "New Chat",
+        "category": "SWE-Xplorer",
+        "icon": "$(add)"
+      },
+      {
+        "command": "sweXplorer.history",
+        "title": "Chat History",
+        "category": "SWE-Xplorer",
+        "icon": "$(history)"
+      },
+      {
+        "command": "sweXplorer.openTree",
+        "title": "Show Search Tree",
+        "category": "SWE-Xplorer",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "sweXplorer.askAboutSelection",
+        "title": "Ask SWE-Xplorer About This Code",
+        "category": "SWE-Xplorer"
+      },
+      {
+        "command": "sweXplorer.stop",
+        "title": "Stop the Run",
+        "category": "SWE-Xplorer"
+      },
+      {
+        "command": "sweXplorer.setApiKey",
+        "title": "Set API Key",
+        "category": "SWE-Xplorer",
+        "icon": "$(key)"
+      },
+      {
+        "command": "sweXplorer.restartServer",
+        "title": "Restart Backend",
+        "category": "SWE-Xplorer"
+      },
+      {
+        "command": "sweXplorer.showLog",
+        "title": "Show Backend Log",
+        "category": "SWE-Xplorer"
+      },
+      {
+        "command": "sweXplorer.focus",
+        "title": "Open Chat",
+        "category": "SWE-Xplorer"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sweXplorer.newChat",
+          "when": "view == sweXplorer.chat || view == sweXplorer.chatSecondary",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sweXplorer.history",
+          "when": "view == sweXplorer.chat || view == sweXplorer.chatSecondary",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sweXplorer.openTree",
+          "when": "view == sweXplorer.chat || view == sweXplorer.chatSecondary",
+          "group": "navigation@3"
+        },
+        {
+          "command": "sweXplorer.setApiKey",
+          "when": "view == sweXplorer.chat || view == sweXplorer.chatSecondary",
+          "group": "more@1"
+        },
+        {
+          "command": "sweXplorer.restartServer",
+          "when": "view == sweXplorer.chat || view == sweXplorer.chatSecondary",
+          "group": "more@2"
+        },
+        {
+          "command": "sweXplorer.showLog",
+          "when": "view == sweXplorer.chat || view == sweXplorer.chatSecondary",
+          "group": "more@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "sweXplorer.askAboutSelection",
+          "group": "navigation@90"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "sweXplorer.askAboutSelection",
+        "key": "ctrl+alt+x",
+        "mac": "cmd+alt+x",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "SWE-Xplorer",
+      "properties": {
+        "sweXplorer.pythonPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Python that has SWE-Xplorer installed (runs the backend). Empty: detect it automatically. The agent's own commands use the workspace's virtualenv when there is one."
+        },
+        "sweXplorer.serverUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Attach to an already running SWE-Xplorer GUI server (e.g. `http://127.0.0.1:8765`) instead of starting one."
+        },
+        "sweXplorer.port": {
+          "type": "number",
+          "default": 8790,
+          "description": "First port to try for the backend (it uses the next free one)."
+        },
+        "sweXplorer.config": {
+          "type": "string",
+          "default": "swe_xplorer.yaml",
+          "markdownDescription": "Agent config: a built-in name (e.g. `swe_xplorer.yaml`) or a path to a YAML file."
+        },
+        "sweXplorer.rewardSameAsPolicy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the selected model as the reward model too."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "npx --yes @vscode/vsce package --no-dependencies",
+    "test": "node test/client.test.js"
+  }
+}

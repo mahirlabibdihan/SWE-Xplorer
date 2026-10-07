@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- Dev harness: the sidebar webview outside VS Code, with a mocked API and Dark Modern theme variables.
+     Serve the repo root (python -m http.server) and open /vscode-extension/test/harness.html?s=review|running|welcome -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SWE-Xplorer sidebar harness</title>
+  <link rel="stylesheet" href="../media/chat.css" />
+  <style>
+    :root {
+      --vscode-foreground: #cccccc; --vscode-descriptionForeground: #9d9d9d; --vscode-font-family: "Segoe UI", system-ui, sans-serif;
+      --vscode-font-size: 13px; --vscode-editor-font-family: Consolas, "Courier New", monospace; --vscode-editor-font-size: 13px;
+      --vscode-panel-border: #2b2b2b; --vscode-textCodeBlock-background: #2b2b2b; --vscode-textLink-foreground: #4daafc;
+      --vscode-button-background: #0078d4; --vscode-button-foreground: #fff; --vscode-button-hoverBackground: #026ec1;
+      --vscode-button-secondaryBackground: #313131; --vscode-button-secondaryForeground: #ccc; --vscode-button-secondaryHoverBackground: #3c3c3c;
+      --vscode-input-background: #313131; --vscode-input-border: #3c3c3c; --vscode-input-foreground: #ccc; --vscode-input-placeholderForeground: #989898;
+      --vscode-focusBorder: #0078d4; --vscode-dropdown-background: #313131; --vscode-dropdown-foreground: #ccc; --vscode-dropdown-border: #3c3c3c;
+      --vscode-badge-background: #616161; --vscode-badge-foreground: #f8f8f8; --vscode-list-hoverBackground: #2a2d2e; --vscode-errorForeground: #f85149;
+      --vscode-charts-orange: #d18616; --vscode-charts-green: #89d185; --vscode-charts-blue: #3794ff; --vscode-charts-red: #f14c4c; --vscode-charts-yellow: #cca700; --vscode-charts-purple: #b180d7;
+    }
+    body { background: #181818; width: 360px; height: 100vh; margin: 0; border-right: 1px solid #2b2b2b; }
+  </style>
+</head>
+<body data-logo="../media/logo.svg">
+  <div id="app"></div>
+  <script>
+    const sent = [];
+    window.acquireVsCodeApi = () => ({ postMessage: (m) => sent.push(m), getState: () => ({}), setState: () => {} });
+    const scenario = new URLSearchParams(location.search).get("s") || "review";
+    const trace = [
+      { kind: "phase", label: "Request 1", detail: "Explore with path-level best-first search" },
+      { kind: "step", n: 1, itr: 1, type: "search", v: 0.62, thought: "I need to find where slugify is defined to add the max_length argument.", command: "grep -rn \"def slugify\" django/utils/", obs: "<returncode>0</returncode>\n<output>\ndjango/utils/text.py:460:def slugify(value, allow_unicode=False):\n</output>" },
+      { kind: "step", n: 2, itr: 1, type: "read", v: 0.66, thought: "Let me read the function and its docstring.", command: "sed -n '455,480p' django/utils/text.py", obs: "<returncode>2</returncode>\n<output>\nsed: can't read django/utils/txt.py: No such file or directory\n</output>" },
+      { kind: "backtrack", from_step: 1, alt_of: 2 },
+      { kind: "step", n: 3, itr: 1, type: "search", v: 0.59, thought: "Check the existing tests for slugify to follow their style.", command: "grep -n \"slugify\" tests/utils_tests/test_text.py" },
+      { kind: "step", n: 4, itr: 1, type: "edit", v: 0.78, thought: "Add max_length: truncate after slugifying, then strip a trailing hyphen so the slug never ends with '-'.", command: "python - <<'EOF'\n…add max_length=None to slugify…\nEOF" },
+      { kind: "phase", label: "Reconcile", detail: "2 paths share a codebase state" },
+      { kind: "step", n: 5, itr: 2, type: "test", v: 0.81, thought: "Run the text utility tests.", command: "python tests/runtests.py utils_tests.test_text -v 1", obs: "Ran 37 tests in 0.21s\n\nOK" },
+      { kind: "step", n: 6, itr: 2, type: "submit", v: 0.84, thought: "The change is complete and tests pass.", command: "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT" },
+    ];
+    const turnDone = {
+      n: 1, status: "Submitted", user: "Add an optional `max_length` argument to `django.utils.text.slugify()`. The slug must never end with a hyphen.",
+      response: "I added an optional `max_length` parameter to `slugify()`.\n\nWhen it is set, the slug is truncated **after** normalisation and any trailing hyphen or underscore is stripped, so `slugify('Hello world', max_length=6)` returns `hello`.\n\nThe existing behaviour is unchanged when `max_length` is `None`; I added three tests covering truncation, the trailing-hyphen case and Unicode input.",
+      files: ["django/utils/text.py", "tests/utils_tests/test_text.py"], decision: null, trace, cost: 0.0213, iterations: 2, mode: "fresh",
+    };
+    const base = {
+      type: "state", server: "ready", workspace: "django", otherRepo: false, phase: null,
+      models: [{ id: "openrouter", label: "OpenRouter", models: ["openrouter/free", "poolside/laguna-s-2.1:free", "deepseek/deepseek-v4-flash"] }],
+      model: { provider: "openrouter", model: "openrouter/free" }, autoAccept: false, configName: "swe_xplorer.yaml", context: null,
+      recent: [
+        { dir: "a", title: "Hi... are you there?", repo: "django", turns: 1, updated: Date.now() / 1000 - 600 },
+        { dir: "b", title: "Add an optional `max_length` argument to `django.utils.text.slugify()`. When it is set, the slug…", repo: "django", turns: 2, updated: Date.now() / 1000 - 3 * 86400 },
+        { dir: "c", title: "Fix the failing postcode import test", repo: "BPO-Post-Code", turns: 1, updated: Date.now() / 1000 - 9 * 86400 },
+      ],
+    };
+    const states = {
+      welcome: { ...base, session: null, status: { state: "idle" }, trace: [] },
+      review: { ...base, session: { repo: "D:/Work/SWE/django", turns: [turnDone] }, status: { state: "finished" }, trace: [] },
+      running: {
+        ...base, status: { state: "running" }, phase: { phase: "Explore · expanding", detail: "Sampling 2 candidate actions at depth 3" },
+        session: { repo: "D:/Work/SWE/django", turns: [{ ...turnDone, decision: "accepted" }, { n: 2, status: "running", user: "Also make it raise ValueError for a negative max_length.\n\n<code_context file=\"django/utils/text.py\" lines=\"460-475\">\n…\n</code_context>" }] },
+        trace: trace.slice(0, 5),
+        context: null,
+      },
+      foreign: { ...base, workspace: "BPO-Post-Code", sessionRepo: "django", otherRepo: true, session: { repo: "D:/Work/SWE/django", turns: [turnDone] }, status: { state: "idle" }, trace: [] },
+      context: { ...base, session: null, status: { state: "idle" }, trace: [], context: { file: "django/utils/text.py", start: 460, end: 475, diagnostics: ["error: \"max_length\" is not defined (line 470)"] } },
+    };
+  </script>
+  <script src="../media/chat.js"></script>
+  <script>
+    window.postMessage(states[scenario], "*");
+    window.__sent = sent;
+    if (new URLSearchParams(location.search).get("open")) setTimeout(() => document.querySelectorAll(".step details").forEach((d) => (d.open = true)), 60); // openAll
+    if (new URLSearchParams(location.search).get("auto")) setTimeout(() => document.querySelector("#auto").click(), 50);
+    if (new URLSearchParams(location.search).get("edit")) setTimeout(() => document.querySelector('[data-act="edit"]').click(), 50);
+  </script>
+</body>
+</html>
