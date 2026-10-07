@@ -1,4 +1,4 @@
-# Publishes the project page (index.html + assets/) to GitHub Pages.
+# Publishes the project page (website/) to GitHub Pages.
 # Only the page is deployed: no Jekyll build and no submodules (Jekyll over the whole repository fails on the
 # submodules' markdown). Repository settings → Pages → Source must be "GitHub Actions".
 name: Deploy project page
@@ -6,7 +6,7 @@ name: Deploy project page
 on:
   push:
     branches: [main]
-    paths: ["index.html", "assets/**", ".github/workflows/pages.yml"]
+    paths: ["website/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -28,15 +28,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
-          sparse-checkout: |
-            index.html
-            assets
-          sparse-checkout-cone-mode: false
+          sparse-checkout: website
       - name: Collect the site
         run: |
-          mkdir _site
-          cp index.html _site/
-          cp -r assets _site/
+          cp -r website _site
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
