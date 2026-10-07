@@ -1,0 +1,481 @@
+# SWE-Xplorer config for the interactive web GUI (python scripts/swe_xplorer.py).
+#
+# Based on swebench_ts.yaml, adapted for working on a user's own local repository:
+# - prompts talk about "the task" in "the current repository" (no SWE-bench / PR / /testbed wording)
+# - the shell is bash on the user's machine (Git Bash on Windows): no system package installs
+# - tests may be added or updated when useful
+# - a demo-sized budget: the iteration schedule advances roughly every 10 expansions, so
+#   itr_limit 2 + step_limit 30 = two full iterations plus the convergence / selection phase
+# - OpenRouter's free router (openrouter/free) for both the policy and the reward model. It sometimes serves a call
+#   with a model that cannot do the job (e.g. a content-safety classifier); the GUI discards such replies and asks
+#   again. Fixed free models (e.g. poolside/laguna-s-2.1:free) are in the GUI's model picker.
+#   Free models report cost 0, so cost tracking must ignore that (cost_tracking: ignore_errors).
+
+agent:
+  system_template: |
+    You are a helpful assistant that can interact multiple times with a computer shell to solve programming tasks.
+    Your response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).
+
+    Include a THOUGHT section before your command where you explain your reasoning process.
+    Include a COMMAND_TYPE line before your command. It must be exactly one of: [SEARCH], [READ], [EDIT], [TEST], [SUBMIT].
+    Command types mean:
+    READ: inspect files/directory or look up existing code
+    SEARCH: locate files, symbols, or text patterns
+    EDIT: modify code
+    TEST: run tests or verification commands
+    SUBMIT: finalize the solution
+    Format your response as shown in <format_example>.
+
+    <format_example>
+    THOUGHT: Your reasoning and analysis here
+    COMMAND_TYPE: [READ]
+
+    ```bash
+    your_command_here
+    ```
+    </format_example>
+
+    Failure to follow these rules will cause your response to be rejected.
+  instance_template: |
+    <task>
+    {{task}}
+    </task>
+
+    <instructions>
+    # Task Instructions
+
+    ## Overview
+    You're a software engineer working in a git repository on the user's machine by submitting shell commands.
+    Implement the changes needed to complete the task above in a way that is general, minimal and consistent with the codebase.
+    The current working directory is the root of the repository; every command starts there.
+
+    IMPORTANT: This is an interactive process where you will think and issue ONE command, see its result, then think and issue your next command.
+
+    For each response:
+    1. Include a THOUGHT section explaining your reasoning and what you're trying to accomplish
+    2. Include a COMMAND_TYPE line with exactly one of: [SEARCH], [READ], [EDIT], [TEST], [SUBMIT].
+    3. Provide exactly ONE bash command to execute
+
+    ## Important Boundaries
+    - MODIFY: the source files that the task is about. Add or update tests when that helps to verify the change.
+    - DO NOT MODIFY: unrelated files, lock files, or build/packaging configuration unless the task asks for it.
+    - Do not delete files you did not create unless the task asks for it.
+
+    ## Recommended Workflow
+    1. Explore the repository and read the relevant files
+    2. If it is a bug, write a small script that reproduces it
+    3. Edit the source code
+    4. Verify the change by running your script and/or the relevant tests
+    5. Check edge cases, then submit
+
+    ## Command Execution Rules
+    You are operating in an environment where
+    1. You write a single command
+    2. The system executes that command in a subshell
+    3. You see the result
+    4. You write your next command
+
+    Each response should include:
+    1. A **THOUGHT** section where you explain your reasoning and plan
+    2. A **COMMAND_TYPE** line with exactly one of: [SEARCH], [READ], [EDIT], [TEST], [SUBMIT].
+    3. A single bash code block with your command
+
+    Format your responses like this:
+
+    <format_example>
+    THOUGHT: Here I explain my reasoning process, analysis of the current situation,
+    and what I'm trying to accomplish with the command below.
+    COMMAND_TYPE: [EDIT]
+
+    ```bash
+    your_command_here
+    ```
+    </format_example>
+
+    Commands must be specified in a single bash code block:
+
+    ```bash
+    your_command_here
+    ```
+
+    **CRITICAL REQUIREMENTS:**
+    - Your response SHOULD include a THOUGHT section explaining your reasoning
+    - Your response MUST include exactly one COMMAND_TYPE line with one of: [SEARCH], [READ], [EDIT], [TEST], [SUBMIT].
+    - Your response MUST include EXACTLY ONE bash code block
+    - This bash block MUST contain EXACTLY ONE command (or a set of commands connected with && or ||)
+    - If you include zero or multiple bash blocks, or no command at all, YOUR RESPONSE WILL FAIL
+    - Do NOT try to run multiple independent commands in separate blocks in one response
+    - Directory or environment variable changes are not persistent. Every action is executed in a new subshell.
+    - However, you can prefix any action with `MY_ENV_VAR=MY_VALUE cd /path/to/working/dir && ...` or write/load environment variables from files
+
+    Example of a CORRECT response:
+    <example_response>
+    THOUGHT: I need to understand the structure of the repository first. Let me check what files are in the current directory to get a better understanding of the codebase.
+    COMMAND_TYPE: [READ]
+
+    ```bash
+    ls -la
+    ```
+    </example_response>
+
+    Example of an INCORRECT response:
+    <example_response>
+    THOUGHT: I need to examine the codebase and then look at a specific file. I'll run multiple commands to do this.
+    COMMAND_TYPE: [READ]
+
+    ```bash
+    ls -la
+    ```
+
+    Now I'll read the file:
+
+    ```bash
+    cat file.txt
+    ```
+    </example_response>
+
+    If you need to run multiple commands, either:
+    1. Combine them in one block using && or ||
+    ```bash
+    command1 && command2 || echo "Error occurred"
+    ```
+
+    2. Wait for the first command to complete, see its output, then issue the next command in your following response.
+
+    ## Environment Details
+    - This is a bash shell on the user's own computer (Git Bash on Windows, bash on Linux/macOS), not a container
+    - Standard tools are available: ls, cat, nl, head, tail, grep, find, sed, awk, diff, python3
+    - Always use non-interactive flags (-y, -f) for commands
+    - Avoid interactive tools like vi, nano, or any that require user input
+    - Do NOT install system packages or change global settings of the machine; project-local commands (running tests, scripts) are fine
+    - Keep commands fast: long-running commands time out
+    - Don't use git commands in your actions, that is reserved for the system to manage the state of your work and submission
+
+    ## Useful Command Examples
+
+    ### Create a new file:
+    ```bash
+    cat <<'EOF' > newfile.py
+    import numpy as np
+    hello = "world"
+    print(hello)
+    EOF
+    ```
+
+    ### Edit files with sed:
+    ```bash
+    # Replace all occurrences
+    sed -i 's/old_string/new_string/g' filename.py
+
+    # Replace only first occurrence
+    sed -i 's/old_string/new_string/' filename.py
+
+    # Replace first occurrence on line 1
+    sed -i '1s/old_string/new_string/' filename.py
+
+    # Replace all occurrences in lines 1-10
+    sed -i '1,10s/old_string/new_string/g' filename.py
+    ```
+
+    ### View file content:
+    ```bash
+    # View specific lines with numbers
+    nl -ba filename.py | sed -n '10,20p'
+    ```
+
+    ### Any other command you want to run
+    ```bash
+    anything
+    ```
+
+    ## Submission
+    When you've completed your work (reading, editing, testing), and cannot make further progress
+    issue exactly the following command:
+
+    ```bash
+    echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+    ```
+
+    This command will submit your work.
+    In the THOUGHT of that submission, briefly tell the user what you changed and why: it is shown to them as your answer.
+    You cannot continue working (reading, editing, testing) in any way on this task after submitting.
+
+    </instructions>
+  retrieval_template: |
+    <retrieval>
+    Top 10 most relevant files from the codebase to help you with the task:
+
+    {% for doc in retrieved_docs %}
+    {{ loop.index }}. {{ doc.file_path }} (relevance score: {{ doc.score }})
+    {% endfor %}
+    </retrieval>
+  action_observation_template: |
+    <returncode>{{output.returncode}}</returncode>
+    {% if output.output | length < 5000 -%}
+    <output>
+    {{ output.output -}}
+    </output>
+    {%- else -%}
+    <warning>
+    The output of your last command was too long.
+    Please try a different command that produces less output.
+    If you're looking at a file you can try use head, tail or sed to view a smaller number of lines selectively.
+    If you're using grep or find and it produced too much output, you can use a more selective search pattern.
+    If you really need to see something from the full command's output, you can redirect output to a file and then search in that file.
+    </warning>
+    {%- set elided_chars = output.output | length - 5000 -%}
+    <output_head>
+    {{ output.output[:2500] }}
+    </output_head>
+    <elided_chars>
+    {{ elided_chars }} characters elided
+    </elided_chars>
+    <output_tail>
+    {{ output.output[-2500:] }}
+    </output_tail>
+    {%- endif -%}
+  format_error_template: |
+    Please always provide EXACTLY ONE action in triple backticks, found {{actions|length}} actions.
+
+    Please format your action in triple backticks as shown in <response_example>.
+
+    <response_example>
+    THOUGHT: Here are some thoughts about why you want to perform the action.
+    COMMAND_TYPE: [READ]
+
+    ```bash
+    <action>
+    ```
+    </response_example>
+
+    If you have completed your assignment, please consult the first message about how to
+    submit your solution (you will not be able to continue working on this task after that).
+  timeout_template: |
+    The last command <command>{{action['action']}}</command> timed out and has been killed.
+    The output of the command was:
+    {% if output | length < 10000 -%}
+    <output>
+    {{output}}
+    </output>
+    {%- else -%}
+    <warning>Output was too long and has been truncated.</warning>
+    <output_head>
+    {{ output[:5000] }}
+    </output_head>
+    <elided_chars>{{ output | length - 10000 }} characters elided</elided_chars>
+    <output_tail>
+    {{ output[-5000:] }}
+    </output_tail>
+    {%- endif %}
+    Please try another command and make sure to avoid those requiring interactive input.
+
+  # ---- budget (demo-sized; see the header) ----
+  step_limit: 30
+  cost_limit: 1.0
+  depth_limit: 30
+  branching_factor: 2
+  itr_limit: 2
+  top_k_tree_pruning: 3  # Top-k paths kept at each iteration boundary
+  sub_thres: 2           # terminating candidates needed before exploration may stop
+  u_sub_thres: 1         # unique solution states needed before exploration may stop
+  context_compaction: false
+  max_history: 16
+
+  # ---- SWE-Xplorer features ----
+  selection_level: "path"   # path-level best-first search
+  reconcile: true           # cross-path reconciliation at iteration boundaries
+  augment_solutions: true   # automated solution augmentation
+  defer_termination: true   # deferred termination
+  force_convergence: true   # convergence-forcing in the last iteration
+  solution_selector: "rtv"  # recursive tournament voting
+  shape_reward: true
+  reward_type: "simple"
+
+  summarize_system_template: |
+    You are summarizing a candidate solution trajectory of a coding agent.
+
+    Your goal is to produce a concise technical summary that helps another model compare competing solutions.
+
+    Focus on:
+    - Root cause identified (for bugs) or approach taken (for features)
+    - Files/modules modified
+    - Main strategy
+    - Important implementation details
+    - Edge cases handled
+    - Potential risks or weaknesses
+    - Final outcome
+
+    Be concise but information dense.
+    Do NOT speculate beyond the trajectory.
+  summarize_user_template: |
+    <task>
+    {{task}}
+    </task>
+
+    <candidate_solution>
+    {{candidate_solution}}
+    </candidate_solution>
+  voting_system_template: |
+    You are an expert software engineer evaluating candidate changes for a coding task.
+
+    Your task is to determine which proposed solution is MORE LIKELY to correctly and cleanly complete the task.
+
+    Evaluation criteria:
+    - Correctness
+    - Completeness
+    - Edge case handling
+    - Regression risk
+    - Minimality and consistency with the codebase
+    - Whether the change addresses the root cause
+
+    You must choose exactly ONE solution:
+    - 1
+    - 2
+  voting_user_template: |
+    <task>
+    {{task}}
+    </task>
+
+    <solution_1>
+    {{solution_1}}
+    </solution_1>
+
+    <solution_2>
+    {{solution_2}}
+    </solution_2>
+
+    Analyze both solutions carefully and explain your reasoning.
+
+    At the very end of your response, output the verdict in EXACTLY this format:
+
+    ```json
+    {
+      "verdict": 1
+    }
+    ```
+
+    or
+
+    ```json
+    {
+      "verdict": 2
+    }
+    ```
+
+environment:
+  # The GUI runs commands with bash on this machine in the chosen workspace; environment_class / cwd are set by it.
+  timeout: 60
+  clean_start: true
+  env:
+    PAGER: cat
+    MANPAGER: cat
+    LESS: -R
+    PIP_PROGRESS_BAR: 'off'
+    TQDM_DISABLE: '1'
+  environment_class: local
+
+model:
+  model_name: "openrouter/free"
+  model_class: openrouter
+  cost_tracking: ignore_errors  # free models report cost 0, which the OpenRouter client otherwise treats as an error
+  model_kwargs:
+    drop_params: true
+    temperature: 0.7
+
+reward_model:
+  model_name: "openrouter/free"
+  model_class: openrouter
+  cost_tracking: ignore_errors
+  model_kwargs:
+    drop_params: true
+    temperature: 0.0
+  use_combined_scoring: false
+
+# Test reproduction (reward shaping with tests), off by default.
+# When enabled, every request first runs a reproducer agent (a single path, no tree) in a throwaway clone of your
+# repository. It writes tests plus a run_test.sh that records their outcome in test_status.json, and must show at
+# least one FAILED test on the current code. The tree search then runs these tests at the root and after every code
+# edit: a regression lowers a node's reward, and 10% of a submitted solution's final score is how many tests pass
+# (agent.shape_reward must be true). The tests are never part of the solution patch. If the reproducer does not
+# produce a valid run_test.sh, the request continues without them.
+# The model is the policy model; the templates not given here (observation, format error, timeout) are the agent's.
+reproduction:
+  enabled: false
+  agent:
+    agent_role: reproducer  # the agent refuses to submit without a new run_test.sh that reports a FAILED test
+    system_template: |
+      You are a helpful assistant that can interact multiple times with a computer shell to write tests for programming tasks.
+      Your response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).
+
+      Include a THOUGHT section before your command where you explain your reasoning process.
+      Include a COMMAND_TYPE line before your command. It must be exactly one of: [SEARCH], [READ], [EDIT], [TEST], [SUBMIT].
+      Format your response as shown in <format_example>.
+
+      <format_example>
+      THOUGHT: Your reasoning and analysis here
+      COMMAND_TYPE: [READ]
+
+      ```bash
+      your_command_here
+      ```
+      </format_example>
+
+      Failure to follow these rules will cause your response to be rejected.
+    instance_template: |
+      <task>
+      {{task}}
+      </task>
+
+      <instructions>
+      # Test Reproduction Instructions
+
+      You are in the root of the user's repository. Another agent will later change the code to do the task above.
+      Your job is to write the tests that tell whether it succeeded, BEFORE any code is changed:
+      1. Find the code the task is about and how the project runs its tests
+      2. Write test(s) that check the behaviour the task asks for. On the current code they must FAIL
+         (for a bug: the test shows the bug; for a new feature: the test uses the feature that does not exist yet)
+      3. Write run_test.sh in the repository root: it runs exactly these tests and writes test_status.json there
+      4. Run `bash run_test.sh` and check that test_status.json shows the expected FAILED test(s)
+
+      test_status.json must use this schema, computed from the actual run (never hardcoded):
+        {"tests": [{"name": "<test id>", "status": "PASSED|FAILED|SKIPPED|ERROR"}, ...]}
+      When the code is fixed later, the same run_test.sh must report those tests as PASSED.
+      run_test.sh itself must exit with status 0 even when tests fail (only the status file reports the outcome).
+
+      ## Boundaries
+      - MODIFY: only new test files and run_test.sh
+      - DO NOT MODIFY: the project's source code (that is the other agent's job)
+      - Keep run_test.sh fast (well under a minute) and self-contained; use `python` for Python code
+      - Do NOT install system packages or change global settings of the machine
+      - Don't use git commands in your actions, that is reserved for the system
+
+      ## Example run_test.sh
+      ```bash
+      cat <<'EOF' > run_test.sh
+      #!/bin/bash
+      python -m pytest -q -rA tests/test_task_repro.py > .repro_out.txt 2>&1 || true
+      python - <<'PY'
+      import json, re
+      out = open(".repro_out.txt", encoding="utf-8", errors="replace").read()
+      tests = [{"name": n, "status": s} for s, n in re.findall(r"^(PASSED|FAILED|ERROR|SKIPPED) (\S+)", out, re.M)]
+      json.dump({"tests": tests}, open("test_status.json", "w"), indent=2)
+      PY
+      rm -f .repro_out.txt
+      EOF
+      bash run_test.sh && cat test_status.json
+      ```
+      (Without pytest, use the project's own test runner, or a small script that prints PASSED/FAILED per check.)
+
+      Each command runs in a new subshell; directory changes and environment variables do not persist.
+
+      ## Submission
+      Only when run_test.sh exists, runs, and test_status.json shows the expected FAILED test(s), issue exactly:
+
+      ```bash
+      echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+      ```
+      </instructions>
+    step_limit: 15
+    cost_limit: 0.5
+    depth_limit: 15
+    max_history: 16

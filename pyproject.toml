@@ -102,7 +102,7 @@ where = ["src"]
 include = ["minisweagent*"]
 
 [tool.setuptools.package-data]
-minisweagent = ["config/**/*"]
+minisweagent = ["config/**/*", "gui/static/*"]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.

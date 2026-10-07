@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SWE-Xplorer</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="start-screen">
+<header class="topbar">
+  <div class="brand"><img class="logo" src="/static/logo.svg" alt=""><span class="wordmark"><b>SWE-X</b>plorer</span>
+    <span class="tagline">explore · reconcile · prune</span><span id="platform" class="badge muted"></span></div>
+  <div class="controls">
+    <button id="btn-pause" disabled title="Pause at the next safe point">⏸ Pause</button>
+    <button id="btn-step" disabled title="Run one step, then pause">⏭ Step</button>
+    <button id="btn-stop" class="danger" disabled title="Stop the run">⏹ Stop</button>
+  </div>
+  <div class="status"><span id="state-pill" class="pill idle">idle</span><span id="cost" class="muted"></span></div>
+</header>
+
+<main class="layout">
+  <!-- ============================ LEFT: setup ============================ -->
+  <aside class="panel left" id="left">
+    <nav class="tabs" data-tabs="left">
+      <button data-tab="chat" class="active">Chat</button>
+      <button data-tab="task">Setup</button>
+      <button data-tab="config">Config</button>
+      <button data-tab="models">Models</button>
+      <button data-tab="keys">Keys</button>
+    </nav>
+
+    <section class="tab-body active chat" data-body="chat">
+      <div class="chat-head">
+        <span id="chat-title" class="chat-title">New chat</span>
+        <span class="spacer"></span>
+        <button class="icon" id="btn-history" title="Chat history">🕘</button>
+        <button class="icon" id="btn-new-chat" title="New chat">✎</button>
+        <div id="history-pop" class="popover hist-pop hidden"></div>
+      </div>
+      <div id="chat-log" class="chat-log"></div>
+      <div class="composer">
+        <div class="composer-card" id="composer-card">
+          <textarea id="chat-input" rows="1" placeholder="Describe a bug or a feature…" spellcheck="true"></textarea>
+          <div class="ctool">
+            <button id="chat-repo" class="pill repo-pill need" title="Choose the local git repository the agent works on">📁 Select repository</button>
+            <button id="btn-model" class="pill" title="Model"><span id="model-label">model</span> <span class="caret">▾</span></button>
+            <span class="spacer"></span>
+            <button id="btn-auto" class="pill ghost" title="Auto-accept: apply every result to your repo as soon as it is submitted">⚡ Auto</button>
+            <input type="checkbox" id="auto-accept" class="hidden">
+            <button id="btn-send" class="send" title="Send (Enter)">↑</button>
+          </div>
+          <div id="model-pop" class="popover model-pop hidden">
+            <div class="pop-title">Model</div>
+            <label class="pop-field"><span>Provider <small class="muted">(only those with an API key)</small></span><select id="mb-provider"></select></label>
+            <label class="pop-field"><span>Model</span><input id="mb-model" list="mb-models" placeholder="model name" spellcheck="false"></label>
+            <datalist id="mb-models"></datalist>
+            <label class="pop-field hidden" id="mb-base-field"><span>API base</span><input id="mb-base" placeholder="http://localhost:8000/v1" spellcheck="false"></label>
+            <label class="check" id="mb-reward-label"><input type="checkbox" id="mb-reward" checked> Use the same model as reward model</label>
+            <a href="#" id="mb-nokeys" class="hidden warn-text">No API key set: add one in the Keys tab →</a>
+            <div class="pop-foot muted">More options in the <a href="#" data-goto="models">Models</a> and <a href="#" data-goto="config">Config</a> tabs.</div>
+          </div>
+        </div>
+        <div class="under">
+          <select id="ws-quick" class="ghost-select hidden" title="Where the agent works">
+            <option value="clone">🖥 Sandbox copy</option>
+            <option value="inplace">⚠ In place</option>
+          </select>
+          <span class="local-note" title="SWE-Xplorer edits your repository directly. While it runs it checks out its own commits (on a detached HEAD); when it finishes your branch is back as it was, with the result as uncommitted edits. Avoid editing files while it runs.">💻 Local repo</span>
+          <button id="py-chip" class="ghost-select hidden" title="Python used for the agent's commands"></button>
+          <span class="spacer"></span>
+          <small id="composer-hint" class="muted"></small>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-body" data-body="task">
+      <label class="field"><span>Repository <small class="muted">(any folder inside a local git repo; also selectable from the chat)</small></span>
+        <div class="row"><input id="repo" placeholder="D:\path\to\repo  or  /home/me/repo" spellcheck="false"><button id="btn-browse">Browse…</button></div>
+        <small id="repo-info" class="muted"></small>
+      </label>
+      <label class="field"><span>Python for the agent's commands</span>
+        <input id="python-path" spellcheck="false" placeholder="auto: .venv / venv / env in the repository, else the GUI's Python">
+        <small id="python-info" class="muted">A virtualenv folder or a python executable. Its Scripts/bin folder is put on PATH, and the workspace root on PYTHONPATH.</small>
+      </label>
+      <fieldset class="field hidden" id="ws-fieldset">
+        <legend>Working directory</legend>
+        <label class="radio"><input type="radio" name="wsmode" value="clone"> Sandbox clone <em class="muted">(recommended: your repo is never touched)</em></label>
+        <label class="radio"><input type="radio" name="wsmode" value="inplace" checked> In place <em class="warn-text">(agent commits, detaches HEAD, runs git reset/clean)</em></label>
+        <label class="check"><input type="checkbox" id="include-uncommitted" checked> Include uncommitted changes of the repo</label>
+      </fieldset>
+      <label class="field"><span>Runs folder <small class="muted">(workspace clone, tree JSON, trajectory, patch, log)</small></span>
+        <input id="runs-dir" spellcheck="false">
+      </label>
+      <div class="field">
+        <span>View a saved tree</span>
+        <div class="row"><input type="file" id="tree-file" accept=".json"><button id="btn-load-tree">Open</button></div>
+        <small class="muted">Any <code>*.tree.json</code> written by the batch runner or this GUI.</small>
+      </div>
+    </section>
+
+    <section class="tab-body" data-body="config">
+      <div class="field">
+        <span>Config file</span>
+        <div class="row"><select id="cfg-select"></select><button id="btn-cfg-load">Load</button></div>
+        <div class="row"><input id="cfg-path" placeholder="…or any YAML path" spellcheck="false"><button id="btn-cfg-open">Open</button></div>
+        <div class="row gap"><span id="cfg-name" class="badge"></span><span id="cfg-dirty" class="badge warn hidden">modified</span>
+          <span class="spacer"></span><button id="btn-cfg-save">Save as…</button></div>
+      </div>
+      <nav class="tabs sub" data-tabs="cfg">
+        <button data-tab="agent" class="active">Agent</button>
+        <button data-tab="env">Environment</button>
+        <button data-tab="repro">Reproduction</button>
+        <button data-tab="yaml">YAML</button>
+      </nav>
+      <section class="tab-body active" data-body="agent"><div id="form-agent" class="form"></div></section>
+      <section class="tab-body" data-body="env">
+        <p class="note">Runs use the local shell instead of Docker (<span id="bash-path"></span>). <code>environment_class</code>, <code>image</code> and <code>cwd</code> are replaced by the workspace; everything else (timeout, env vars, clean_start, …) is used.</p>
+        <div id="form-env" class="form"></div>
+      </section>
+      <section class="tab-body" data-body="repro">
+        <p class="note">Test reproduction (config: <code>reproduction</code>). When <code>enabled</code>, each request first runs a
+          reproducer agent in a scratch clone of your repository: it writes tests plus a <code>run_test.sh</code> that must show a
+          FAILED test on the current code. The tree search then runs them at the root and after every code edit, and uses the
+          outcome to shape the rewards (needs <code>agent.shape_reward</code>). The tests never become part of the result.
+          It uses the policy model and adds one agent run per request.</p>
+        <div id="form-repro" class="form"></div>
+      </section>
+      <section class="tab-body" data-body="yaml">
+        <textarea id="yaml-text" class="code" rows="30" spellcheck="false"></textarea>
+        <div class="row gap"><button id="btn-yaml-apply" class="primary">Apply YAML</button><button id="btn-yaml-refresh">Refresh from form</button></div>
+      </section>
+    </section>
+
+    <section class="tab-body" data-body="models">
+      <h3>Policy model <small class="muted">(config: <code>model</code>)</small></h3>
+      <div id="form-model" class="form"></div>
+      <h3>Reward model <small class="muted">(config: <code>reward_model</code>)</small></h3>
+      <label class="check"><input type="checkbox" id="reward-same" checked> Use the policy model as reward model</label>
+      <div id="form-reward" class="form"></div>
+    </section>
+
+    <section class="tab-body" data-body="keys">
+      <p class="note">Keys are saved by the local SWE-Xplorer server in its app folder (<code>keys.env</code>, plain text in your user profile, like other CLI tools) and loaded at start-up. They are never sent back to this page. Nothing leaves your machine except the model API calls themselves.</p>
+      <div id="keys-list"></div>
+      <div class="row gap"><input id="key-new-name" placeholder="OTHER_ENV_VAR" spellcheck="false"><button id="btn-key-add">Add variable</button></div>
+      <label class="check"><input type="checkbox" id="keys-remember" checked> Remember on this computer <em class="muted" id="keys-file"></em></label>
+      <button id="btn-keys-save" class="primary">Save keys</button>
+      <small id="keys-msg" class="muted"></small>
+    </section>
+  </aside>
+
+  <!-- ============================ CENTER: tree ============================ -->
+  <section class="center">
+    <div class="tree-toolbar">
+      <div class="seg" id="view-mode" title="Show the search tree, the workspace's git graph, or both">
+        <button data-view="tree" class="on">Tree</button><button data-view="split">Split</button><button data-view="git">Git</button>
+      </div>
+      <button id="btn-fit" title="Fit tree to view">⤢ Fit</button>
+      <button id="btn-zoom-in" title="Zoom in">＋</button>
+      <button id="btn-zoom-out" title="Zoom out">－</button>
+      <label class="check"><input type="checkbox" id="follow" checked> Follow</label>
+      <label class="check"><input type="checkbox" id="show-pruned" checked> Pruned</label>
+      <label class="check"><input type="checkbox" id="show-legend" checked> Legend</label>
+      <label>Color <select id="color-mode">
+        <option value="score">score</option><option value="rel">score (relative)</option>
+        <option value="itr">iteration</option><option value="rq">request</option><option value="type">action type</option></select></label>
+      <span class="spacer"></span>
+      <div class="cycle" id="cycle" title="Each iteration: explore (path-level best-first search) → at the iteration boundary reconcile compatible paths and prune the frontier to top-k → finally augment solutions and select one by recursive tournament voting">
+        <span data-stage="explore">Explore</span><i>→</i><span data-stage="reconcile">Reconcile</span><i>→</i><span data-stage="prune">Prune</span><i>⟳</i><span data-stage="select">Select</span>
+      </div>
+      <span id="phase" class="phase">Idle</span>
+    </div>
+    <div class="views mode-tree" id="views">
+    <div class="tree-wrap" id="tree-wrap">
+      <svg id="tree" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-bt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fb923c"/></marker>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g id="vp"><g id="g-bands"></g><g id="g-edges"></g><g id="g-fx"></g><g id="g-nodes"></g></g>
+      </svg>
+      <div id="empty" class="empty">
+        <div class="empty-inner">
+          <img class="logo big" src="/static/logo.svg" alt="">
+          <div class="wordmark big"><b>SWE-X</b>plorer</div>
+          <p>Send a request in the chat.<br>The search tree grows here live.</p>
+          <p class="muted">Or open a saved <code>*.tree.json</code> from the Setup tab.</p>
+        </div>
+      </div>
+      <div id="tooltip" class="tooltip hidden"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="git-wrap" id="git-wrap">
+      <div class="git-head">
+        <b>Git graph</b><span class="muted" id="git-sub">workspace</span><span class="spacer"></span>
+        <label class="check" title="Also show commits whose tree nodes were all pruned"><input type="checkbox" id="git-pruned" checked> pruned</label>
+        <button id="btn-git-refresh" title="Refresh">⟳</button>
+      </div>
+      <div class="git-scroll" id="git-scroll"><div class="git-empty muted" id="git-empty">The graph appears once the first run starts.</div>
+        <div class="git-graph" id="git-graph"><svg id="git-svg"></svg><div id="git-rows"></div></div></div>
+      <div class="git-detail hidden" id="git-detail">
+        <div class="row gap pad-x"><b id="git-detail-title"></b><span class="spacer"></span><button id="git-detail-close">✕</button></div>
+        <div id="git-detail-body" class="pad-x"></div>
+      </div>
+    </div>
+    </div>
+    <div class="replay">
+      <button id="btn-play" title="Replay the search">⟲ Replay</button>
+      <input type="range" id="replay" min="0" max="0" value="0">
+      <span id="replay-label" class="muted">live</span>
+      <button id="btn-live" class="hidden">● Live</button>
+    </div>
+    <footer class="stats" id="stats"></footer>
+  </section>
+
+  <!-- ============================ RIGHT: details ============================ -->
+  <aside class="panel right" id="right">
+    <nav class="tabs" data-tabs="right">
+      <button data-tab="node" class="active">Node</button>
+      <button data-tab="path">Path</button>
+      <button data-tab="log">Log</button>
+      <button data-tab="result">Result</button>
+    </nav>
+    <section class="tab-body active" data-body="node"><div id="node-view" class="muted pad">Click a node to inspect it.</div></section>
+    <section class="tab-body" data-body="path"><div id="path-view" class="muted pad">The executed path appears here.</div></section>
+    <section class="tab-body" data-body="log">
+      <div class="row gap pad-x"><input id="log-filter" placeholder="filter…"><label class="check"><input type="checkbox" id="log-auto" checked> auto-scroll</label></div>
+      <pre id="log" class="log"></pre>
+    </section>
+    <section class="tab-body" data-body="result"><div id="result-view" class="muted pad">No result yet.</div></section>
+  </aside>
+</main>
+
+<!-- folder picker -->
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="row gap"><b>Select a local git repository</b><span class="spacer"></span><button id="modal-close">✕</button></div>
+    <small class="muted">Folders marked ⎇ are git repositories. You can also paste a path and press Go.</small>
+    <div class="row gap"><button id="modal-up">↑ Up</button><input id="modal-path" spellcheck="false"><button id="modal-go">Go</button></div>
+    <div id="modal-list" class="modal-list"></div>
+    <div class="row gap"><small id="modal-info" class="muted"></small><span class="spacer"></span><button id="modal-select" class="primary">Use this folder</button></div>
+  </div>
+</div>
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+<script src="/static/chat.js"></script>
+<script src="/static/gitgraph.js"></script>
+<script src="/static/modelbar.js"></script>
+</body>
+</html>
