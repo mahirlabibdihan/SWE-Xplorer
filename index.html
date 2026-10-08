@@ -494,6 +494,8 @@
       background: radial-gradient(900px 420px at 80% -10%, rgba(34, 194, 122, .22), transparent 60%),
         radial-gradient(700px 380px at -10% 110%, rgba(0, 114, 178, .25), transparent 60%), #0a0f16; }
     #intro.fade::before { opacity: 0; }
+    #intro canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .7s ease; }
+    #intro.fade canvas { opacity: 0; }
     #intro .it { position: relative; font: 600 clamp(56px, 11vw, 150px)/1 "Inter", system-ui, sans-serif; letter-spacing: -.035em;
       color: #eef2f6; white-space: nowrap; transform-origin: 0 0; }
     #intro .in { display: inline-block; opacity: 0; }
@@ -513,7 +515,7 @@
   </script>
 </head>
 <body>
-  <div id="intro" aria-hidden="true"><div class="it"><span class="in"><b>SWE-X</b><span class="tail"></span><span class="caret"></span></span></div></div>
+  <div id="intro" aria-hidden="true"><canvas id="intro-tree"></canvas><div class="it"><span class="in"><b>SWE-X</b><span class="tail"></span><span class="caret"></span></span></div></div>
 
   <!-- ================================================================ NAV -->
   <nav class="top">
@@ -1530,6 +1532,62 @@ initTheme();
 initTerminal();
 initDemo();
 
+
+// background of the intro: a search tree grows, losing branches are pruned, the winning path lights up
+function introTree(canvas, isDone) {
+  const ctx = canvas.getContext("2d"); if (!ctx) return;
+  const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const depthMax = W < 700 ? 6 : 8, x0 = W * 0.06, dx = (W * 0.9) / depthMax;
+  const nodes = [{ x: x0, y: H * 0.5, d: 0, p: -1, spread: H * 0.42 }];
+  for (let i = 0; i < nodes.length && nodes.length < 150; i++) {
+    const n = nodes[i]; if (n.d >= depthMax) continue;
+    const k = n.d === 0 ? 3 : n.d >= 4 ? (rnd() < 0.6 ? 1 : 2) : rnd() < 0.3 ? 1 : rnd() < 0.75 ? 2 : 3;
+    for (let c = 0; c < k; c++) {
+      const off = k === 1 ? (rnd() - 0.5) * n.spread * 0.4 : (c / (k - 1) - 0.5) * n.spread;
+      const y = Math.max(H * 0.06, Math.min(H * 0.94, n.y + off + (rnd() - 0.5) * 18));
+      nodes.push({ x: x0 + (n.d + 1) * dx + (rnd() - 0.5) * dx * 0.25, y, d: n.d + 1, p: i, spread: n.spread * 0.55 });
+    }
+  }
+  // spread the columns over the full width, however deep the tree got
+  const deepest = Math.max(...nodes.map((n) => n.d)), step = (W * 0.9) / deepest;
+  nodes.forEach((n) => { n.x = x0 + n.d * step + (n.d ? (rnd() - 0.5) * step * 0.25 : 0); });
+  // the winning path: the deepest leaf closest to the vertical middle
+  let w = nodes.filter((n) => n.d === deepest).sort((a, b) => Math.abs(a.y - H / 2) - Math.abs(b.y - H / 2))[0];
+  const win = new Set(); for (let i = nodes.indexOf(w); i >= 0; i = nodes[i].p) win.add(i);
+  nodes.forEach((n, i) => { n.t = 0.15 + (i / nodes.length) * 2.0 + rnd() * 0.15; n.win = win.has(i); });
+  const t0 = performance.now(), cx = W / 2, cy = H / 2, R = Math.hypot(W, H) / 2;
+  const ease = (v) => 1 - Math.pow(1 - Math.max(0, Math.min(1, v)), 3);
+  (function frame() {
+    if (isDone()) return;
+    const t = (performance.now() - t0) / 1000, prune = ease((t - 2.35) / 0.6);
+    ctx.clearRect(0, 0, W, H);
+    for (const n of nodes) {
+      if (n.p < 0 || t < n.t) continue;
+      const a = nodes[n.p], g = ease((t - n.t) / 0.45), mx = (a.x + n.x) / 2;
+      const fade = Math.min(1, 0.45 + Math.hypot(mx - cx, (a.y + n.y) / 2 - cy) / R * 1.2);   // quieter behind the title
+      const alpha = (n.win ? 0.45 + 0.5 * prune : 0.38 * (1 - 0.6 * prune)) * fade;
+      ctx.strokeStyle = n.win && prune > 0 ? `rgba(94,227,161,${alpha})` : `rgba(78,168,230,${alpha})`;
+      ctx.lineWidth = n.win ? 1.4 + 1.4 * prune : 1.3;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y);
+      const ex = a.x + (n.x - a.x) * g, ey = a.y + (n.y - a.y) * g;
+      ctx.bezierCurveTo(a.x + (mx - a.x) * g, a.y, a.x + (mx - a.x) * g, ey, ex, ey);
+      ctx.stroke();
+    }
+    for (const n of nodes) {
+      if (t < n.t) continue;
+      const g = ease((t - n.t - 0.3) / 0.35); if (g <= 0) continue;
+      const fade = Math.min(1, 0.45 + Math.hypot(n.x - cx, n.y - cy) / R * 1.2);
+      const alpha = (n.win ? 0.65 + 0.35 * prune : 0.6 * (1 - 0.6 * prune)) * fade * g;
+      const r = (n.d === 0 ? 5 : 3.4) * (n.win ? 1 + 0.4 * prune : 1);
+      if (n.win && prune > 0) { ctx.fillStyle = `rgba(94,227,161,${0.12 * prune * fade})`; ctx.beginPath(); ctx.arc(n.x, n.y, r * 3.2, 0, 7); ctx.fill(); }
+      ctx.fillStyle = n.win && prune > 0 ? `rgba(94,227,161,${alpha})` : `rgba(78,168,230,${alpha})`;
+      ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 7); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  })();
+}
 // ------------------------------------------------------------------ intro: SWE-X → SWE-Xplorer, then fly into the hero title
 (function intro() {
   const root = document.documentElement;
@@ -1546,13 +1604,14 @@ initDemo();
   };
   if (scrollY > 0) return finish();   // a restored scroll position: don't cover the page
   skips.forEach((e) => addEventListener(e, finish, { passive: true }));
+  introTree($("#intro-tree"), () => done);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   (async () => {
     await Promise.race([document.fonts ? document.fonts.ready : null, sleep(1200)]);
     ov.classList.add("show");
     await sleep(1400);
     for (const ch of "plorer") { if (done) return; tail.textContent += ch; await sleep(90); }
-    await sleep(550);
+    await sleep(900);
     if (done) return;
     $("#intro .caret")?.remove();
     // compare the glyph boxes of both texts; the word scales about its own top-left corner
