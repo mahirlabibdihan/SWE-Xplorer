@@ -151,12 +151,6 @@
     }
     .hero .wrap { position: relative; display: grid; grid-template-columns: 1.08fr .92fr; gap: 48px; align-items: center; }
     @media (max-width: 920px) { .hero .wrap { grid-template-columns: 1fr; } }
-    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
-    .pill {
-      display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px;
-      font: 500 12.5px/1 "Inter", sans-serif; color: #cfe9dc; background: rgba(34, 194, 122, .12); border: 1px solid rgba(34, 194, 122, .35);
-    }
-    .pill.blue { color: #cfe3f3; background: rgba(78, 168, 230, .12); border-color: rgba(78, 168, 230, .35); }
     .hero h1 { font-size: clamp(42px, 6.4vw, 72px); line-height: 1; letter-spacing: -.035em; margin: 0 0 18px; font-weight: 600; }
     .hero h1 b { font-weight: 800; background: linear-gradient(100deg, #5ee3a1, #4ea8e6); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .hero .subtitle { font-size: clamp(19px, 2.2vw, 24px); color: #c9d3de; margin: 0 0 22px; line-height: 1.35; font-weight: 500; }
@@ -532,10 +526,6 @@
   <header class="hero">
     <div class="wrap">
       <div>
-        <div class="badge-row">
-          <span class="pill"><i class="fa-solid fa-code-branch"></i> Iterative tree search</span>
-          <span class="pill blue"><i class="fa-solid fa-flask"></i> SWE-bench Verified &amp; Multilingual</span>
-        </div>
         <h1><b>SWE-X</b>plorer</h1>
         <p class="subtitle">Scaling Coding Agents through Iterative Tree Search</p>
         <p class="authors" id="authors"></p>
