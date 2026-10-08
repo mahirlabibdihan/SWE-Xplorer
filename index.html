@@ -1539,27 +1539,27 @@ function introTree(canvas, isDone) {
   const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
   canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
   let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const depthMax = W < 700 ? 6 : 8, x0 = W * 0.06, dx = (W * 0.9) / depthMax;
-  const nodes = [{ x: x0, y: H * 0.5, d: 0, p: -1, spread: H * 0.42 }];
-  // full branching near the root; further right, paths get pruned and columns keep a cap and a minimum gap
-  const perCol = Math.max(8, Math.floor((H * 0.88) / 24)), gap = 10, cols = {};
-  for (let i = 0; i < nodes.length; i++) {
-    const n = nodes[i]; if (n.d >= depthMax) continue;
-    if (n.d >= 3 && rnd() < 0.06 + 0.02 * (n.d - 3)) continue;      // pruned on the way
-    const k = n.d === 0 ? 3 : n.d >= 4 ? (rnd() < 0.25 ? 1 : 2) : rnd() < 0.35 ? 1 : rnd() < 0.75 ? 2 : 3;
-    for (let c = 0; c < k; c++) {
-      const col = (cols[n.d + 1] = cols[n.d + 1] || []);
-      if (col.length >= perCol) break;
-      const off = k === 1 ? (rnd() - 0.5) * n.spread * 0.4 : (c / (k - 1) - 0.5) * n.spread;
-      const y = Math.max(H * 0.06, Math.min(H * 0.94, n.y + off + (rnd() - 0.5) * 18));
-      if (col.some((v) => Math.abs(v - y) < gap)) continue;
-      col.push(y);
-      nodes.push({ x: x0 + (n.d + 1) * dx, y, d: n.d + 1, p: i, spread: n.spread * 0.55 });
+  // a triangle: each column holds more nodes over a wider span; children attach to the nearest live parent,
+  // so edges fan out without crossing, and some nodes past the third column are pruned (no children)
+  const D = W < 700 ? 6 : 8, x0 = W * 0.06, step = (W * 0.9) / D, midY = H * 0.5;
+  const maxCol = Math.max(6, Math.floor((H * 0.86) / 30));
+  const nodes = [{ x: x0, y: midY, d: 0, p: -1, live: true }];
+  let prev = [0];
+  for (let d = 1; d <= D; d++) {
+    const n = Math.round(1 + (maxCol - 1) * Math.pow(d / D, 0.85)), half = H * 0.44 * Math.pow(d / D, 0.9);
+    let live = prev.filter((i) => nodes[i].live); if (!live.length) live = prev;
+    const col = [];
+    for (let j = 0; j < n; j++) {
+      const slot = n === 1 ? 0 : (2 * j) / (n - 1) - 1;
+      const y = midY + slot * half + (n > 1 ? (rnd() - 0.5) * (half / (n - 1)) * 0.6 : 0);
+      let p = live[0], best = Infinity;
+      for (const i of live) { const dy = Math.abs(nodes[i].y - y); if (dy < best) { best = dy; p = i; } }
+      col.push(nodes.length);
+      nodes.push({ x: x0 + d * step + (rnd() - 0.5) * step * 0.18, y, d, p, live: d < 3 || rnd() > 0.16 });
     }
+    prev = col;
   }
-  // spread the columns over the full width, however deep the tree got
-  const deepest = Math.max(...nodes.map((n) => n.d)), step = (W * 0.9) / deepest;
-  nodes.forEach((n) => { n.x = x0 + n.d * step + (n.d ? (rnd() - 0.5) * step * 0.25 : 0); });
+  const deepest = D;
   // the winning path: the deepest leaf closest to the vertical middle
   let w = nodes.filter((n) => n.d === deepest).sort((a, b) => Math.abs(a.y - H / 2) - Math.abs(b.y - H / 2))[0];
   const win = new Set(); for (let i = nodes.indexOf(w); i >= 0; i = nodes[i].p) win.add(i);
