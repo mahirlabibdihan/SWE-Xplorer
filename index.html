@@ -105,7 +105,7 @@
     code, pre, .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
     b.x { font-weight: 800; }
     em.nm { font-style: normal; white-space: nowrap; }
-    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .wrap { max-width: 1448px; margin: 0 auto; padding: 0 24px; }
     @media (max-width: 640px) { .wrap { padding: 0 16px; } }
     section { padding: 72px 0; }
     section + section { border-top: 1px solid var(--line); }
@@ -362,6 +362,110 @@
     .feat li i { color: var(--accent); margin-top: 5px; width: 16px; text-align: center; }
     .feat li b { color: var(--text); }
     .feat kbd { font: 600 11px "JetBrains Mono", monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--surface); }
+    /* gui demo: an animated replay of the local GUI (always dark, like the app) */
+    .demo { --d-bg: #0f1117; --d-bg2: #161922; --d-bg3: #1d212c; --d-line: #2a2f3c; --d-text: #e5e7eb; --d-muted: #8b93a7;
+      border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+      background: var(--d-bg); color: var(--d-text); font: 12.5px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 6px 0 10px; }
+    .demo .bar { display: flex; gap: 7px; padding: 9px 12px; background: #121b26; border-bottom: 1px solid #1f2a38; align-items: center; }
+    .demo .bar i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .demo .bar span { margin-left: 8px; color: #7f8b99; font: 12px "JetBrains Mono", monospace; }
+    .d-top { height: 44px; display: flex; align-items: center; gap: 14px; padding: 0 14px; border-bottom: 1px solid var(--d-line); background: var(--d-bg2); }
+    .d-brand { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    .d-brand img { width: 20px; height: 20px; border-radius: 5px; }
+    .d-brand b { font-weight: 800; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .d-cycle { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--d-muted); margin-left: auto; }
+    .d-cycle span { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--d-line); transition: all .3s; }
+    .d-cycle i { font-style: normal; opacity: .5; }
+    .d-cycle span.on { color: #0b0d12; font-weight: 700; border-color: transparent; }
+    .d-cycle span.on[data-p=explore] { background: #60a5fa; }
+    .d-cycle span.on[data-p=reconcile] { background: #a78bfa; }
+    .d-cycle span.on[data-p=prune] { background: #fb923c; }
+    .d-cycle span.on[data-p=select] { background: #facc15; }
+    .d-pill { padding: 2px 10px; border-radius: 999px; font-size: 11.5px; border: 1px solid var(--d-line); color: var(--d-muted); }
+    .d-pill.running { border-color: #22c55e; color: #22c55e; }
+    .d-pill.finished { border-color: #60a5fa; color: #60a5fa; }
+    .d-cost { color: var(--d-muted); font: 11.5px "JetBrains Mono", monospace; min-width: 44px; }
+    .d-body { display: grid; grid-template-columns: 380px minmax(0, 1fr); height: 470px; }
+    .d-log > *, .d-trace, .d-step { min-width: 0; }
+    .d-chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--d-bg2); border-right: 1px solid var(--d-line); }
+    .d-chead { padding: 8px 14px; border-bottom: 1px solid var(--d-line); font-weight: 600; font-size: 12.5px; display: flex; gap: 8px; }
+    .d-chead small { color: var(--d-muted); font-weight: 400; margin-left: auto; }
+    .d-log { flex: 1; overflow: hidden; padding: 12px 12px 4px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+    .d-user { align-self: flex-end; max-width: 88%; background: #3b82f6; color: #fff; padding: 7px 11px; border-radius: 12px 12px 3px 12px; animation: dIn .3s ease-out; }
+    .d-rhead { font-size: 11px; color: var(--d-muted); display: flex; gap: 6px; align-items: center; margin: 0 0 4px 2px; }
+    .d-rhead .sp { width: 9px; height: 9px; border-radius: 50%; border: 2px solid #60a5fa; border-right-color: transparent; animation: dSpin .8s linear infinite; }
+    .d-rhead.done .sp { animation: none; border: 0; width: auto; height: auto; }
+    .d-rhead.done .sp::before { content: "✓"; color: #22c55e; }
+    .d-trace { padding: 0 2px; transition: max-height .5s ease; overflow: hidden; }
+    .d-step { position: relative; padding: 4px 0 5px 15px; border-left: 2px solid var(--d-line); margin-left: 5px; animation: dIn .3s ease-out; }
+    .d-step::before { content: ""; position: absolute; left: -6px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--dot, #64748b); border: 2px solid var(--d-bg2); }
+    .d-step .h { font-size: 10.5px; color: var(--d-muted); }
+    .d-step .h .alt { color: #fb923c; }
+    .d-step code { display: block; font: 10.5px/1.4 "JetBrains Mono", monospace; color: #93c5fd; background: var(--d-bg3); padding: 2px 6px; border-radius: 4px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .d-step .o { font: 10.5px "JetBrains Mono", monospace; color: #94a3b8; margin-top: 2px; }
+    .d-step .o.bad { color: #f87171; } .d-step .o.ok { color: #4ade80; }
+    .d-mark { margin: 3px 0 5px 5px; padding: 3px 9px; border: 1px solid var(--d-line); border-radius: 6px; font-size: 11px; animation: dIn .3s ease-out; }
+    .d-mark.bt { border-color: #7c2d12; color: #fb923c; }
+    .d-mark.rc { border-color: #4c3a87; color: #c4b5fd; }
+    .d-mark.pr { border-color: #6b4a1e; color: #fdba74; }
+    .d-mark.win { border-color: #713f12; color: #facc15; }
+    .d-reply { animation: dIn .4s ease-out; color: #d6dbe4; }
+    .d-reply code { font: 11px "JetBrains Mono", monospace; background: var(--d-bg3); padding: 0 4px; border-radius: 4px; }
+    .d-review { margin-top: 8px; border: 1px solid var(--d-line); border-radius: 8px; padding: 8px 10px; background: var(--d-bg); }
+    .d-review .f { font: 11px "JetBrains Mono", monospace; display: flex; gap: 8px; }
+    .d-review .f .a { color: #4ade80; } .d-review .f .d { color: #f87171; }
+    .d-review .btns { display: flex; gap: 6px; margin-top: 8px; }
+    .d-review button { font: inherit; font-size: 11.5px; border-radius: 6px; padding: 3px 12px; border: 1px solid var(--d-line); background: var(--d-bg3); color: var(--d-text); cursor: default; transition: transform .15s, box-shadow .2s; }
+    .d-review button.acc { background: #15803d; border-color: #15803d; color: #fff; }
+    .d-review button.press { transform: scale(.94); box-shadow: 0 0 0 3px #22c55e55; }
+    .d-review .applied { margin-top: 6px; color: #4ade80; font-size: 11.5px; animation: dIn .3s ease-out; }
+    .d-composer { margin: 8px 10px 10px; border: 1px solid var(--d-line); border-radius: 10px; background: var(--d-bg); padding: 8px 10px; }
+    .d-input { min-height: 18px; color: var(--d-text); white-space: nowrap; overflow: hidden; }
+    .d-input:empty::before { content: "Describe a bug or a feature…"; color: var(--d-muted); }
+    .d-input .caret { display: inline-block; width: 1.5px; height: 14px; background: #60a5fa; vertical-align: -2px; animation: blink 1s step-end infinite; }
+    .d-tools { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--d-muted); }
+    .d-tools span { border: 1px solid var(--d-line); border-radius: 999px; padding: 1px 8px; }
+    .d-tools .send { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; background: #3b82f6; color: #fff; display: grid; place-items: center; padding: 0; border: 0; transition: transform .15s; }
+    .d-tools .send.press { transform: scale(.85); }
+    .d-tree { position: relative; min-width: 0; background: var(--d-bg); }
+    .d-tree svg { position: absolute; inset: 28px 0 26px; width: 100%; height: calc(100% - 54px); display: block; }
+    .d-phase { position: absolute; top: 10px; left: 12px; font-size: 11px; color: var(--d-muted); }
+    .d-phase b { color: var(--d-text); font-weight: 600; }
+    .d-legend { position: absolute; bottom: 8px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 10.5px; color: var(--d-muted); }
+    .d-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .d-tree .e { fill: none; stroke: #3a4152; stroke-width: 2; stroke-dasharray: var(--len); stroke-dashoffset: var(--len); transition: stroke-dashoffset .5s ease, opacity .5s; }
+    .d-tree .e.on { stroke-dashoffset: 0; }
+    .d-tree .e.rc { stroke: #a78bfa; stroke-width: 2; }
+    .d-tree .e.rc.on { stroke-dasharray: 5 4; animation: dDash .6s linear infinite; }
+    .d-tree .bt { fill: none; stroke: #fb923c; stroke-width: 2.4; stroke-dasharray: 7 5; opacity: 0; transition: opacity .3s; }
+    .d-tree .bt.on { opacity: 1; animation: dDash .6s linear infinite; }
+    .d-tree .bt.gone { opacity: 0; transition: opacity 1.4s; }
+    .d-tree .n { opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity .35s; }
+    .d-tree .n.on { opacity: 1; animation: dPop .4s ease-out; }
+    .d-tree .n.pruned { opacity: .22; }
+    .d-tree .n text { font: 600 10px system-ui, sans-serif; fill: #0b0d12; text-anchor: middle; dominant-baseline: central; }
+    .d-tree .n .lb { font: 10px system-ui, sans-serif; fill: #8b93a7; text-anchor: middle; font-weight: 400; }
+    .d-tree .ring { fill: none; opacity: 0; transition: opacity .3s; }
+    .d-tree .ring.on { opacity: 1; }
+    .d-tree .cur { stroke: #60a5fa; stroke-width: 2.5; transition: transform .45s ease, opacity .3s; }
+    .d-tree .fr { stroke: #22d3ee; stroke-width: 1.5; stroke-dasharray: 2 2; }
+    .d-tree .fail { stroke: #ef4444; stroke-width: 2; }
+    .d-tree .win { stroke: #facc15; stroke-width: 3; }
+    .d-tree .star { fill: #facc15; font: 600 11px system-ui, sans-serif; text-anchor: middle; opacity: 0; transition: opacity .4s; }
+    .d-tree .star.on { opacity: 1; }
+    .d-tree .cut { stroke: #fb923c; stroke-width: 2; opacity: 0; transition: opacity .3s; }
+    .d-tree .cut.on { opacity: 1; }
+    .demo-cap { text-align: center; color: var(--muted); font-size: 13px; margin: 0 0 30px; }
+    @keyframes dIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    @keyframes dPop { 0% { transform: scale(.3); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    @keyframes dSpin { to { transform: rotate(360deg); } }
+    @keyframes dDash { to { stroke-dashoffset: -24; } }
+    @media (max-width: 860px) {
+      .d-body { grid-template-columns: minmax(0, 1fr); height: auto; }
+      .d-chat { height: 400px; border-right: 0; border-bottom: 1px solid var(--d-line); }
+      .d-tree { height: 340px; }
+      .d-cycle span:not(.on), .d-cycle i { display: none; }
+    }
     .shot { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 24px 60px rgba(0, 0, 0, .25); background: #0d141d; }
     .shot .bar { display: flex; gap: 7px; padding: 9px 12px; background: #121b26; border-bottom: 1px solid #1f2a38; align-items: center; }
     .shot .bar i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -633,7 +737,31 @@
       <div class="eyebrow">Try it</div>
       <h2>Watch it search your own repository</h2>
       <p class="lead"><b class="x">SWE-X</b>plorer ships with a local web GUI and a VS Code extension: point it at a git repository, describe a change, and watch the tree grow live.</p>
-      <div class="gui">
+      <div class="demo" id="demo" aria-label="Animated preview of the SWE-Xplorer GUI">
+        <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>127.0.0.1:8765</span></div>
+        <div class="d-top">
+          <div class="d-brand"><img src="assets/favicon.svg" alt="" /><span><b>SWE-X</b>plorer</span></div>
+          <div class="d-cycle" id="d-cycle"><span data-p="explore">explore</span><i>→</i><span data-p="reconcile">reconcile</span><i>→</i><span data-p="prune">prune</span><i>→</i><span data-p="select">select</span></div>
+          <span class="d-pill" id="d-pill">idle</span><span class="d-cost" id="d-cost">$0.000</span>
+        </div>
+        <div class="d-body">
+          <div class="d-chat">
+            <div class="d-chead">New chat <small>📁 django</small></div>
+            <div class="d-log" id="d-log"></div>
+            <div class="d-composer">
+              <div class="d-input" id="d-input"></div>
+              <div class="d-tools"><span>gpt-5-mini ▾</span><span>⚡ Auto</span><button class="send" id="d-send" tabindex="-1" aria-hidden="true">↑</button></div>
+            </div>
+          </div>
+          <div class="d-tree">
+            <div class="d-phase" id="d-phase">Search tree</div>
+            <svg id="d-svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Search tree growing"></svg>
+            <div class="d-legend"><span><i style="background:#60a5fa"></i>read</span><span><i style="background:#22d3ee"></i>search</span><span><i style="background:#f472b6"></i>edit</span><span><i style="background:#4ade80"></i>test</span><span><i style="background:#facc15"></i>submit</span><span><i style="background:#a78bfa"></i>reconciled</span><span><i style="border:1.5px dashed #22d3ee;background:none"></i>frontier</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="demo-cap">An animated preview of the local GUI, replaying a typical run: search, backtrack, reconcile, prune, tournament, review.</p>
+      <div class="gui noshot">
         <div>
           <ul class="feat">
             <li><i class="fa-solid fa-comments"></i><div><b>Chat, not a batch job.</b> The search trace streams in as reasoning, and the winning patch's explanation is the reply. Follow-ups continue the same tree.</div></li>
@@ -655,11 +783,6 @@
 <span class="p">$ </span>uv run mini-extra swebench-ts \
     --subset verified --split test \
     --output output/verified</pre></div>
-        </div>
-        <div class="shot">
-          <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>127.0.0.1:8765</span></div>
-          <img src="assets/gui.png" alt="The SWE-Xplorer GUI: chat with the reasoning trace, the live search tree, and node details" loading="lazy"
-            onerror="this.closest('.gui').classList.add('noshot'); this.closest('.shot').remove()" />
         </div>
       </div>
     </div>
@@ -846,6 +969,168 @@ function initTerminal() {
     while (body.children.length > 15) body.removeChild(body.firstChild);
     setTimeout(tick, i === 1 ? 600 : 1150);
   })();
+}
+// ------------------------------------------------------------------ GUI demo
+function initDemo() {
+  const root = $("#demo"); if (!root) return;
+  const svg = $("#d-svg"), log = $("#d-log"), input = $("#d-input");
+  const NS = "http://www.w3.org/2000/svg";
+  const COL = { read: "#60a5fa", search: "#22d3ee", edit: "#f472b6", test: "#4ade80", submit: "#facc15", merge: "#a78bfa", root: "#64748b" };
+  // id: [x, y, type, parent, label]
+  const N = {
+    r:  [300, 40, "root", null, ""],
+    a1: [300, 104, "read", "r", "1"],
+    p1: [170, 168, "search", "a1", ""],
+    a2: [300, 168, "search", "a1", "2"],
+    a3: [215, 232, "edit", "a2", "3"],
+    p2: [110, 296, "test", "a3", ""],
+    a4: [215, 296, "test", "a3", "4"],
+    a5: [400, 232, "edit", "a2", "5"],
+    a6: [400, 296, "test", "a5", "6"],
+    a7: [480, 360, "submit", "a6", "7"],
+    m:  [305, 360, "merge", null, "8"],
+  };
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+  const gE = el("g", {}, svg), gF = el("g", {}, svg), gN = el("g", {}, svg);
+  const edges = {}, nodes = {};
+  const shape = (t, g, fill) => t === "edit" ? el("rect", { x: -11, y: -11, width: 22, height: 22, rx: 5, fill }, g)
+    : t === "submit" || t === "merge" ? el("rect", { x: -10, y: -10, width: 20, height: 20, rx: 3, transform: "rotate(45)", fill }, g)
+    : el("circle", { r: 12, fill }, g);
+  for (const [id, [x, y, t, par, lb]] of Object.entries(N)) {
+    if (par) {
+      const [px, py] = N[par], my = (py + y) / 2;
+      const p = el("path", { class: "e", d: `M${px},${py} C${px},${my} ${x},${my} ${x},${y}` }, gE);
+      p.style.setProperty("--len", Math.ceil(p.getTotalLength()));
+      edges[id] = p;
+    }
+    const g = el("g", { class: "n", transform: `translate(${x},${y})` }, gN);
+    shape(t, el("g", {}, g), COL[t]);
+    if (lb) el("text", {}, g).textContent = lb;
+    if (id === "r") el("text", { class: "lb", y: -22 }, g).textContent = "root";
+    g.dataset.ring = "";
+    nodes[id] = g;
+  }
+  for (const id of ["a6", "m"]) {   // reconciliation edges into the merged candidate
+    const [x, y] = N.m, [px, py] = N[id === "m" ? "a4" : id], my = (py + y) / 2;
+    const p = el("path", { class: "e rc", d: `M${px},${py} C${px},${my} ${x},${my} ${x},${y}` }, gE);
+    p.style.setProperty("--len", Math.ceil(p.getTotalLength()));
+    edges["rc_" + id] = p;
+  }
+  const bt = el("path", { class: "bt", d: `M${N.a4[0] - 6},${N.a4[1] - 14} C150,250 230,170 ${N.a2[0] - 15},${N.a2[1] + 2}`, "marker-end": "url(#d-arrow)" }, gF);
+  const defs = el("defs", {}, svg); const mk = el("marker", { id: "d-arrow", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+  el("path", { d: "M0,0 L10,5 L0,10 z", fill: "#fb923c" }, mk);
+  const ring = (id, cls, r = 18) => el("circle", { class: "ring " + cls, r, cx: N[id][0], cy: N[id][1] }, gF);
+  const cur = el("circle", { class: "ring cur", r: 18, cx: 0, cy: 0 }, gF);
+  const rings = { p1: ring("p1", "fr"), p2: ring("p2", "fr"), a4: ring("a4", "fail"), win: ring("m", "win", 20) };
+  const cuts = ["p1", "p2"].map((id) => el("path", { class: "cut", d: `M${N[id][0] - 9},${N[id][1] - 9} L${N[id][0] + 9},${N[id][1] + 9} M${N[id][0] + 9},${N[id][1] - 9} L${N[id][0] - 9},${N[id][1] + 9}` }, gF));
+  const star = el("text", { class: "star", x: N.m[0], y: N.m[1] + 36 }, gF); star.textContent = "★ winner";
+
+  let tok = 0, visible = false, cost = 0;
+  const wait = (ms, t) => new Promise((res, rej) => {
+    const tick = () => { if (t !== tok) return rej("stop"); if (!visible) return setTimeout(tick, 200); setTimeout(() => t === tok ? res() : rej("stop"), ms); };
+    tick();
+  });
+  const phase = (p, text) => { root.querySelectorAll("#d-cycle span").forEach((s) => s.classList.toggle("on", s.dataset.p === p)); $("#d-phase").innerHTML = text; };
+  const pill = (st) => { const e = $("#d-pill"); e.className = "d-pill " + st; e.textContent = st; };
+  const spend = (d) => { cost += d; $("#d-cost").textContent = "$" + cost.toFixed(3); };
+  const scroll = () => { log.scrollTop = log.scrollHeight; };
+  const show = (id, current = true) => {
+    nodes[id].classList.add("on"); edges[id]?.classList.add("on");
+    if (current) { cur.setAttribute("cx", N[id][0]); cur.setAttribute("cy", N[id][1]); cur.classList.add("on"); }
+  };
+  let trace, rhead;
+  const addStep = (no, type, cmd, out, cls = "", alt = "") => {
+    const d = document.createElement("div"); d.className = "d-step"; d.style.setProperty("--dot", COL[type]);
+    d.innerHTML = `<div class="h">step ${no} · ${type}${alt ? ` <span class="alt">${alt}</span>` : ""}</div><code>${escapeHtml(cmd)}</code>${out ? `<div class="o ${cls}">${escapeHtml(out)}</div>` : ""}`;
+    trace.appendChild(d); scroll();
+  };
+  const mark = (cls, text) => { const d = document.createElement("div"); d.className = "d-mark " + cls; d.textContent = text; trace.appendChild(d); scroll(); };
+
+  function reset() {
+    log.innerHTML = ""; input.innerHTML = ""; cost = 0; spend(0); pill("idle"); phase("", "Search tree");
+    svg.querySelectorAll(".on, .pruned, .gone").forEach((e) => e.classList.remove("on", "pruned", "gone"));
+  }
+  async function run(t) {
+    reset();
+    await wait(700, t);
+    const ask = "Random() in order_by() breaks GROUP BY aggregation";
+    for (let i = 1; i <= ask.length; i++) { input.innerHTML = escapeHtml(ask.slice(0, i)) + '<span class="caret"></span>'; await wait(32, t); }
+    await wait(350, t);
+    $("#d-send").classList.add("press"); await wait(160, t); $("#d-send").classList.remove("press");
+    input.innerHTML = "";
+    const u = document.createElement("div"); u.className = "d-user"; u.textContent = ask; log.appendChild(u);
+    const msg = document.createElement("div");
+    msg.innerHTML = '<div class="d-rhead"><span class="sp"></span><span class="tx">Searching…</span></div><div class="d-trace"></div>';
+    log.appendChild(msg); trace = msg.querySelector(".d-trace"); rhead = msg.querySelector(".d-rhead");
+    pill("running"); phase("explore", "Iteration 1 · <b>explore</b>");
+    show("r"); await wait(600, t);
+
+    const steps = [
+      ["a1", "read", "grep -n \"def get_group_by\" django/db/models/sql/compiler.py", "63:    def get_group_by(self, select, order_by):"],
+      ["a2", "search", "grep -rn \"class Random\" django/db/models/functions/", "math.py:144:class Random(NumericOutputFieldMixin, Func):"],
+      ["a3", "edit", "sed -i 's/expressions.extend(expr.get_group_by_cols())/…/' compiler.py", ""],
+      ["a4", "test", "python tests/runtests.py aggregation", "FAILED (failures=2) · exit 1", "bad"],
+    ];
+    for (const [id, ty, cmd, out, cls] of steps) {
+      addStep(id.slice(1), ty, cmd, out, cls); show(id); spend(0.004);
+      if (id === "a1") { await wait(250, t); show("p1", false); rings.p1.classList.add("on"); }
+      if (id === "a3") { await wait(250, t); show("p2", false); rings.p2.classList.add("on"); }
+      await wait(1100, t);
+    }
+    rings.a4.classList.add("on"); await wait(500, t);
+    mark("bt", "↩ Backtrack · alternative to step 3"); bt.classList.add("on");
+    cur.setAttribute("cx", N.a2[0]); cur.setAttribute("cy", N.a2[1]);
+    await wait(1500, t); bt.classList.add("gone");
+    const more = [
+      ["a5", "edit", "python - <<'EOF'  # skip Random() when collecting group-by cols", "", "", "(alt. to step 3)"],
+      ["a6", "test", "python tests/runtests.py aggregation ordering", "OK (412 tests) · exit 0", "ok"],
+      ["a7", "submit", "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT", "◆ candidate #1", "ok"],
+    ];
+    for (const [id, ty, cmd, out, cls, alt] of more) { addStep(id.slice(1), ty, cmd, out, cls, alt); show(id); spend(0.004); await wait(1100, t); }
+
+    phase("reconcile", "Iteration boundary · <b>reconcile</b>"); cur.classList.remove("on");
+    mark("rc", "⇄ Reconcile · steps 3 + 5 merged → candidate #2");
+    edges.rc_a6.classList.add("on"); edges.rc_m.classList.add("on"); await wait(500, t); nodes.m.classList.add("on"); spend(0.006);
+    await wait(1500, t);
+    phase("prune", "Iteration boundary · <b>prune</b> to top-k");
+    mark("pr", "✂ Prune · 2 frontier nodes dropped");
+    cuts.forEach((c) => c.classList.add("on")); await wait(500, t);
+    for (const id of ["p1", "p2"]) { nodes[id].classList.add("pruned"); edges[id].style.opacity = .22; rings[id].classList.remove("on"); }
+    cuts.forEach((c) => c.classList.remove("on"));
+    await wait(1300, t);
+    phase("select", "Final · <b>select</b> by tournament");
+    mark("win", "🏆 Tournament · candidate #2 beats #1"); spend(0.003);
+    await wait(600, t); rings.win.classList.add("on"); star.classList.add("on");
+    await wait(1300, t);
+
+    rhead.classList.add("done"); rhead.querySelector(".tx").textContent = "Searched 8 steps · 2 candidates";
+    trace.style.maxHeight = trace.scrollHeight + "px"; await wait(30, t); trace.style.maxHeight = "0px";
+    pill("finished"); await wait(500, t);
+    const r = document.createElement("div"); r.className = "d-reply";
+    r.innerHTML = `<code>Random()</code> in <code>order_by()</code> no longer leaks into <code>GROUP BY</code>: the compiler now skips it when collecting group-by columns. The aggregation and ordering tests pass.
+      <div class="d-review"><div class="f"><span>django/db/models/sql/compiler.py</span><span class="a">+6</span><span class="d">−1</span></div>
+      <div class="btns"><button class="acc">✓ Accept</button><button>Reject</button><button>Diff</button></div></div>`;
+    msg.appendChild(r); scroll();
+    await wait(1600, t);
+    const acc = r.querySelector(".acc"); acc.classList.add("press"); await wait(220, t); acc.classList.remove("press");
+    const ap = document.createElement("div"); ap.className = "applied"; ap.textContent = "✓ Applied to your working tree as uncommitted changes";
+    r.querySelector(".d-review").appendChild(ap); scroll();
+    await wait(4500, t);
+  }
+  async function loop() {
+    const t = ++tok;
+    try { for (;;) await run(t); } catch (e) { if (e !== "stop") throw e; }
+  }
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // static final frame
+    Object.keys(N).forEach((id) => show(id, false)); edges.rc_a6.classList.add("on"); edges.rc_m.classList.add("on");
+    ["p1", "p2"].forEach((id) => nodes[id].classList.add("pruned")); rings.win.classList.add("on"); star.classList.add("on"); rings.a4.classList.add("on");
+    phase("select", "Final · <b>select</b> by tournament"); pill("finished");
+    log.innerHTML = '<div class="d-user">Random() in order_by() breaks GROUP BY aggregation</div><div class="d-reply"><code>Random()</code> no longer leaks into <code>GROUP BY</code>. Review the patch, then accept or reject it.</div>';
+    return;
+  }
+  new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: .25 }).observe(root);
+  loop();
 }
 function escapeHtml(s) { return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
@@ -1236,6 +1521,7 @@ $$(".copy").forEach((b) => b.addEventListener("click", async () => {
 renderAuthors();
 initTheme();
 initTerminal();
+initDemo();
 drawScaling(); drawScatter(); drawBars(); drawAblation(); drawLeaderboard();
 </script>
 </body>
