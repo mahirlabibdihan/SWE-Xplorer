@@ -20,6 +20,9 @@ It also provides reproducible experiment setups for multiple agent scaffolds,
 including the SWE-Xplorer tree-search agent, base mini-SWE-agent, OpenHands,
 Claude Code, and OpenCode.
 
+Experiment logs and trajectories from the paper's runs are in
+[SWE-Xplorer-Experiments](https://github.com/mahirlabibdihan/SWE-Xplorer-Experiments).
+
 ## Repository Map
 
 | Path | Purpose |
@@ -406,6 +409,8 @@ stack and experiment infrastructure.
 - Full benchmark runs are costly and can consume substantial Docker storage.
 - Use the same task ordering and evaluator version for comparisons.
 - Pier writes per-trial trajectories, patches, metrics, and verifier artifacts.
+- Logs and trajectories from the paper's runs are published in
+  [SWE-Xplorer-Experiments](https://github.com/mahirlabibdihan/SWE-Xplorer-Experiments).
 
 
 ## Acknowledgments
