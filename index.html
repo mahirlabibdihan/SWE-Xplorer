@@ -490,11 +490,11 @@
     .intro body { overflow: hidden; }
     .intro .hero h1 { visibility: hidden; }
     .intro #intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 1000; }
-    #intro::before { content: ""; position: absolute; inset: 0; transition: opacity .8s ease;
+    #intro::before { content: ""; position: absolute; inset: 0; transition: opacity 1s ease;
       background: radial-gradient(900px 420px at 80% -10%, rgba(34, 194, 122, .22), transparent 60%),
         radial-gradient(700px 380px at -10% 110%, rgba(0, 114, 178, .25), transparent 60%), #0a0f16; }
     #intro.fade::before { opacity: 0; }
-    #intro canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .7s ease; }
+    #intro canvas { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .9s ease; }
     #intro.fade canvas { opacity: 0; }
     #intro .it { position: relative; font: 600 clamp(56px, 11vw, 150px)/1 "Inter", system-ui, sans-serif; letter-spacing: -.035em;
       color: #eef2f6; white-space: nowrap; transform-origin: 0 0; }
@@ -1621,6 +1621,7 @@ function introTree(canvas, isDone) {
   };
   if (scrollY > 0) return finish();   // a restored scroll position: don't cover the page
   skips.forEach((e) => addEventListener(e, finish, { passive: true }));
+  const treeStart = performance.now();   // the winning path is fully lit 2.95 s after this
   introTree($("#intro-tree"), () => done);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   (async () => {
@@ -1628,7 +1629,7 @@ function introTree(canvas, isDone) {
     ov.classList.add("show");
     await sleep(1400);
     for (const ch of "plorer") { if (done) return; tail.textContent += ch; await sleep(90); }
-    await sleep(900);
+    await sleep(Math.max(900, 3600 - (performance.now() - treeStart)));   // hold the finished screen ≥ 0.6 s
     if (done) return;
     $("#intro .caret")?.remove();
     // compare the glyph boxes of both texts; the word scales about its own top-left corner
@@ -1636,10 +1637,10 @@ function introTree(canvas, isDone) {
     const to = box(h1), from = box($("#intro .in")), o = word.getBoundingClientRect();
     const k = to.width / from.width;
     const dx = to.left - o.left - k * (from.left - o.left), dy = to.top - o.top - k * (from.top - o.top);
-    word.style.transition = "transform .95s cubic-bezier(.65, 0, .25, 1)";
+    word.style.transition = "transform 1.2s cubic-bezier(.65, 0, .25, 1)";
     word.style.transform = `translate(${dx}px, ${dy}px) scale(${k})`;
     ov.classList.add("fade");
-    await sleep(1000);
+    await sleep(1250);
     finish();
   })();
 })();
