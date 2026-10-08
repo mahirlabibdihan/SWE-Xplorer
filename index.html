@@ -237,6 +237,7 @@
     .fix b { display: block; font-size: 14.5px; }
     .fix span { font-size: 13.5px; color: var(--text-2); }
 
+    .sub-h { font-size: 24px; letter-spacing: -.01em; margin: 0 0 8px; }
     /* ============================================================ playground */
     .play { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
     .rail { display: flex; gap: 6px; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; background: var(--surface-2); }
@@ -626,7 +627,13 @@
   <section id="method">
     <div class="wrap">
       <div class="eyebrow">Method</div>
-      <h2>Watch one search, step by step</h2>
+      <h2>Explore, reconcile, prune, then pick the best patch</h2>
+      <figure style="margin:8px 0 40px">
+        <div class="paper-fig"><img src="assets/overview.svg" alt="Overview of SWE-Xplorer: iterations of best-first search separated by pruning, followed by recursive tournament voting" loading="lazy" /></div>
+        <figcaption><b>Overview.</b> Given an issue and a codebase, the budget is divided across tree-search iterations. Edit actions (red) produce a new codebase state. When two expansions reach the same state they are reconciled into one merged node, then the frontier is pruned to its top-k survivors, which seed the next iteration. The final iterations narrow to paths with at least one edit. The resulting candidates go to Recursive Tournament Voting (RTV).</figcaption>
+      </figure>
+
+      <h3 class="sub-h">Watch one search, step by step</h3>
       <p class="lead">A miniature <b class="x">SWE-X</b>plorer run with two iterations and top-3 pruning. Step through it, or press play.</p>
 
       <div class="play">
@@ -658,11 +665,6 @@
           <span><i class="lg-dot" style="border-radius:3px;background:transparent;border:2px solid var(--accent)"></i>candidate patch</span>
         </div>
       </div>
-
-      <figure style="margin-top:28px">
-        <div class="paper-fig"><img src="assets/overview.svg" alt="Overview of SWE-Xplorer: iterations of best-first search separated by pruning, followed by recursive tournament voting" loading="lazy" /></div>
-        <figcaption><b>Overview.</b> Given an issue and a codebase, the budget is divided across tree-search iterations. Edit actions (red) produce a new codebase state. When two expansions reach the same state they are reconciled into one merged node, then the frontier is pruned to its top-k survivors, which seed the next iteration. The final iterations narrow to paths with at least one edit. The resulting candidates go to Recursive Tournament Voting (RTV).</figcaption>
-      </figure>
     </div>
   </section>
 
