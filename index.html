@@ -1279,7 +1279,7 @@ const PG = (() => {
    Chart 1: scaling (line)
    ===================================================================================================================== */
 function drawScaling() {
-  const box = $("#ch-scaling"), W = 620, H = 400, m = { l: 44, r: 150, t: 14, b: 40 };
+  const box = $("#ch-scaling"), W = 620, H = 400, m = { l: 44, r: 52, t: 14, b: 40 };
   box.innerHTML = "";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Line chart of resolved rate versus budget" }, box);
   const x = (b) => m.l + ((b - 10) / 40) * (W - m.l - m.r);
@@ -1299,13 +1299,13 @@ function drawScaling() {
     const g = el("g", {}, svg);
     s.y.forEach((v, i) => marker(g, s.marker, x(SCALING.budgets[i]), y(v), s.color));
   }
-  // direct labels at the right end, de-collided
+  // final values at the right end, de-collided (names are in the legend)
   const labels = all.map((s) => ({ s, v: s.y[4], y: y(s.y[4]) }));
   labels.sort((a, b) => a.y - b.y);
   for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 16) labels[i].y = labels[i - 1].y + 16;
   for (const L of labels) {
-    const t = el("text", { x: x(50) + 12, y: L.y + 4, class: "dl" }, svg);
-    t.textContent = `${L.s.name}  ${fmt1(L.v)}%`;
+    const t = el("text", { x: x(50) + 10, y: L.y + 4, class: "dl" }, svg);
+    t.textContent = `${fmt1(L.v)}%`;
   }
   // hover layer
   const cross = el("line", { y1: m.t, y2: H - m.b, class: "cross", style: "opacity:0" }, svg);
