@@ -1529,7 +1529,9 @@ $$(".copy").forEach((b) => b.addEventListener("click", async () => {
 
 renderAuthors();
 initTheme();
-initTerminal();
+// the hero terminal starts once the intro has handed over to the page
+if (document.documentElement.classList.contains("intro")) addEventListener("introdone", initTerminal, { once: true });
+else initTerminal();
 initDemo();
 
 
@@ -1618,6 +1620,7 @@ function introTree(canvas, isDone) {
     skips.forEach((e) => removeEventListener(e, finish));
     root.classList.remove("intro");
     ov.remove();
+    dispatchEvent(new Event("introdone"));
   };
   if (scrollY > 0) return finish();   // a restored scroll position: don't cover the page
   skips.forEach((e) => addEventListener(e, finish, { passive: true }));
