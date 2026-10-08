@@ -441,8 +441,10 @@
     .d-tree .bt { fill: none; stroke: #fb923c; stroke-width: 2.4; stroke-dasharray: 7 5; opacity: 0; transition: opacity .3s; }
     .d-tree .bt.on { opacity: 1; animation: dDash .6s linear infinite; }
     .d-tree .bt.gone { opacity: 0; transition: opacity 1.4s; }
-    .d-tree .n { opacity: 0; transform-box: fill-box; transform-origin: center; transition: opacity .35s; }
-    .d-tree .n.on { opacity: 1; animation: dPop .4s ease-out; }
+    .d-tree .n { opacity: 0; transition: opacity .35s; }
+    .d-tree .n .s { transform-box: fill-box; transform-origin: center; }
+    .d-tree .n.on { opacity: 1; }
+    .d-tree .n.on .s { animation: dPop .4s ease-out; }
     .d-tree .n.pruned { opacity: .22; }
     .d-tree .n text { font: 600 10px system-ui, sans-serif; fill: #0b0d12; text-anchor: middle; dominant-baseline: central; }
     .d-tree .n .lb { font: 10px system-ui, sans-serif; fill: #8b93a7; text-anchor: middle; font-weight: 400; }
@@ -1006,8 +1008,9 @@ function initDemo() {
       edges[id] = p;
     }
     const g = el("g", { class: "n", transform: `translate(${x},${y})` }, gN);
-    shape(t, el("g", {}, g), COL[t]);
-    if (lb) el("text", {}, g).textContent = lb;
+    const inner = el("g", { class: "s" }, g);   // animated separately: a CSS transform on g would replace its translate()
+    shape(t, inner, COL[t]);
+    if (lb) el("text", {}, inner).textContent = lb;
     if (id === "r") el("text", { class: "lb", y: -22 }, g).textContent = "root";
     g.dataset.ring = "";
     nodes[id] = g;
