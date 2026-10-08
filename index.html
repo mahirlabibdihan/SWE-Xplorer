@@ -677,7 +677,8 @@
       <h2>Extra budget keeps paying off</h2>
       <p class="lead">Full 500-task SWE-bench Verified and 300-task SWE-bench Multilingual, three model families. Hover the charts for exact values, or switch any chart to a table.</p>
 
-      <div class="panel" style="margin-bottom:20px">
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="panel">
         <div class="panel-head">
           <div><h3>Resolved rate as the test-time budget grows</h3><div class="sub">SWE-bench Verified · gpt-5-mini · budget = expansion limit</div></div>
           <div class="tools">
@@ -690,8 +691,6 @@
         <div class="tblview" id="tb-scaling"></div>
         <p class="note">The dashed ceiling counts a task as solvable if any candidate entering the first tournament round resolves it. It keeps rising (60.8% → 67.0% from budget 30 to 50), so the extra budget finds new solutions rather than re-ranking a fixed pool.</p>
       </div>
-
-      <div class="grid2" style="margin-bottom:20px">
         <div class="panel">
           <div class="panel-head">
             <div><h3>Better and cheaper</h3><div class="sub">Verified · gpt-5-mini · budget 50 · per task</div></div>
@@ -703,6 +702,9 @@
           <div class="chart" id="ch-scatter"></div>
           <div class="tblview" id="tb-scatter"></div>
         </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
         <div class="panel">
           <div class="panel-head">
             <div><h3>Gains over the backbone</h3><div class="sub">mini-SWE-agent vs. <b class="x">SWE-X</b>plorer · resolved %</div></div>
@@ -715,13 +717,6 @@
           <div class="chart" id="ch-bars"></div>
           <div class="tblview" id="tb-bars"></div>
         </div>
-      </div>
-
-      <div class="grid2">
-        <div class="panel">
-          <div class="panel-head"><div><h3>Comparison with other agents</h3><div class="sub">Verified · gpt-5-mini for all agents · cost and time per task · click a column to sort</div></div></div>
-          <div class="lb-wrap"><table class="lb" id="lb"></table></div>
-        </div>
         <div class="panel">
           <div class="panel-head">
             <div><h3>Every component matters</h3><div class="sub">Ablations · Verified · gpt-5-mini</div></div>
@@ -731,6 +726,12 @@
           <div class="tblview" id="tb-abl"></div>
         </div>
       </div>
+
+      <div class="panel">
+          <div class="panel-head"><div><h3>Comparison with other agents</h3><div class="sub">Verified · gpt-5-mini for all agents · cost and time per task · click a column to sort</div></div></div>
+          <div class="lb-wrap"><table class="lb" id="lb"></table></div>
+        </div>
+
       <p class="note" style="margin-top:16px">Every run behind these numbers, with logs, trajectories and patches, is in <a href="https://github.com/mahirlabibdihan/SWE-Xplorer-Experiments"><i class="fa-brands fa-github"></i> mahirlabibdihan/SWE-Xplorer-Experiments</a>.</p>
     </div>
   </section>
@@ -1291,7 +1292,7 @@ const PG = (() => {
    Chart 1: scaling (line)
    ===================================================================================================================== */
 function drawScaling() {
-  const box = $("#ch-scaling"), W = 760, H = 330, m = { l: 44, r: 150, t: 14, b: 40 };
+  const box = $("#ch-scaling"), W = 620, H = 400, m = { l: 44, r: 150, t: 14, b: 40 };
   const showCeil = $("#ceil").checked;
   box.innerHTML = "";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Line chart of resolved rate versus budget" }, box);
@@ -1357,7 +1358,7 @@ function drawScaling() {
    ===================================================================================================================== */
 let scatterX = "cost";
 function drawScatter() {
-  const box = $("#ch-scatter"), W = 520, H = 340, m = { l: 44, r: 20, t: 18, b: 42 };
+  const box = $("#ch-scatter"), W = 620, H = 400, m = { l: 44, r: 20, t: 18, b: 42 };
   box.innerHTML = "";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Scatter of resolved rate versus ${scatterX}` }, box);
   const xmax = scatterX === "cost" ? 0.75 : 30;
@@ -1402,7 +1403,7 @@ function drawScatter() {
    ===================================================================================================================== */
 let bench = "v";
 function drawBars() {
-  const box = $("#ch-bars"), W = 520, H = 340, m = { l: 40, r: 10, t: 30, b: 44 };
+  const box = $("#ch-bars"), W = 620, H = 400, m = { l: 40, r: 10, t: 30, b: 44 };
   box.innerHTML = "";
   const data = MAIN[bench];
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Grouped bar chart of resolved rate per model" }, box);
@@ -1445,7 +1446,7 @@ function drawBars() {
    Chart 4: ablation (dot plot: each configuration vs the full system)
    ===================================================================================================================== */
 function drawAblation() {
-  const box = $("#ch-abl"), W = 520, rowH = 36, m = { l: 236, r: 54, t: 22, b: 36 }, H = m.t + m.b + rowH * ABLATION.length;
+  const box = $("#ch-abl"), W = 620, rowH = 42, m = { l: 236, r: 54, t: 22, b: 36 }, H = m.t + m.b + rowH * ABLATION.length;
   box.innerHTML = "";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Ablation dot plot" }, box);
   const x0 = 52, x1 = 63, x = (v) => m.l + ((v - x0) / (x1 - x0)) * (W - m.l - m.r);
