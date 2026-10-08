@@ -215,3 +215,6 @@ experiments/opencode-swebench/jobs/
 /d_tree.png
 /tree.png
 /tree.html
+
+# Project page: a worktree of the gh-pages branch
+/website/
