@@ -485,12 +485,35 @@
     footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
     footer .sp { margin-left: auto; }
 
+    /* ============================================================ intro */
+    #intro { display: none; }
+    .intro body { overflow: hidden; }
+    .intro .hero h1 { visibility: hidden; }
+    .intro #intro { display: grid; place-items: center; position: fixed; inset: 0; z-index: 1000; }
+    #intro::before { content: ""; position: absolute; inset: 0; transition: opacity .8s ease;
+      background: radial-gradient(900px 420px at 80% -10%, rgba(34, 194, 122, .22), transparent 60%),
+        radial-gradient(700px 380px at -10% 110%, rgba(0, 114, 178, .25), transparent 60%), #0a0f16; }
+    #intro.fade::before { opacity: 0; }
+    #intro .it { position: relative; font: 600 clamp(56px, 11vw, 150px)/1 "Inter", system-ui, sans-serif; letter-spacing: -.035em;
+      color: #eef2f6; white-space: nowrap; transform-origin: 0 0; }
+    #intro .in { display: inline-block; opacity: 0; }
+    #intro.show .in { animation: introIn 1.1s cubic-bezier(.2, .7, .2, 1) forwards; }
+    @keyframes introIn { from { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(12px); } to { opacity: 1; transform: none; filter: none; } }
+    #intro .it b { font-weight: 800; background: linear-gradient(100deg, #5ee3a1, #4ea8e6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    #intro .caret { display: inline-block; width: .055em; height: .78em; margin-left: .05em; vertical-align: -.02em; background: #5ee3a1; animation: introBlink 1s step-end infinite; }
+    @keyframes introBlink { 50% { opacity: 0; } }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
     }
   </style>
+  <script>
+    // intro: decide before first paint, so the hero title never flashes
+    try { if (!location.hash && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("intro"); } catch (e) {}
+  </script>
 </head>
 <body>
+  <div id="intro" aria-hidden="true"><div class="it"><span class="in"><b>SWE-X</b><span class="tail"></span><span class="caret"></span></span></div></div>
 
   <!-- ================================================================ NAV -->
   <nav class="top">
@@ -1506,6 +1529,44 @@ renderAuthors();
 initTheme();
 initTerminal();
 initDemo();
+
+// ------------------------------------------------------------------ intro: SWE-X → SWE-Xplorer, then fly into the hero title
+(function intro() {
+  const root = document.documentElement;
+  if (!root.classList.contains("intro")) return;
+  const ov = $("#intro"), word = $("#intro .it"), tail = $("#intro .tail"), h1 = $(".hero h1");
+  const skips = ["pointerdown", "keydown", "wheel", "touchstart"];
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    skips.forEach((e) => removeEventListener(e, finish));
+    root.classList.remove("intro");
+    ov.remove();
+  };
+  if (scrollY > 0) return finish();   // a restored scroll position: don't cover the page
+  skips.forEach((e) => addEventListener(e, finish, { passive: true }));
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  (async () => {
+    await Promise.race([document.fonts ? document.fonts.ready : null, sleep(1200)]);
+    ov.classList.add("show");
+    await sleep(1400);
+    for (const ch of "plorer") { if (done) return; tail.textContent += ch; await sleep(90); }
+    await sleep(550);
+    if (done) return;
+    $("#intro .caret")?.remove();
+    // compare the glyph boxes of both texts; the word scales about its own top-left corner
+    const box = (el) => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect(); };
+    const to = box(h1), from = box($("#intro .in")), o = word.getBoundingClientRect();
+    const k = to.width / from.width;
+    const dx = to.left - o.left - k * (from.left - o.left), dy = to.top - o.top - k * (from.top - o.top);
+    word.style.transition = "transform .95s cubic-bezier(.65, 0, .25, 1)";
+    word.style.transform = `translate(${dx}px, ${dy}px) scale(${k})`;
+    ov.classList.add("fade");
+    await sleep(1000);
+    finish();
+  })();
+})();
 drawScaling(); drawScatter(); drawBars(); drawAblation(); drawLeaderboard();
 </script>
 </body>
