@@ -1540,13 +1540,13 @@ function introTree(canvas, isDone) {
   canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
   let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const depthMax = W < 700 ? 6 : 8, x0 = W * 0.06, dx = (W * 0.9) / depthMax;
-  const nodes = [{ x: x0, y: H * 0.5, d: 0, p: -1, spread: H * 0.6 }];
-  // keep every column sparse: a cap per depth, a minimum vertical gap, and branches that stop early
-  const perCol = Math.max(6, Math.floor((H * 0.88) / 40)), gap = 28, cols = {};
+  const nodes = [{ x: x0, y: H * 0.5, d: 0, p: -1, spread: H * 0.42 }];
+  // full branching near the root; further right, paths get pruned and columns keep a cap and a minimum gap
+  const perCol = Math.max(8, Math.floor((H * 0.88) / 24)), gap = 10, cols = {};
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i]; if (n.d >= depthMax) continue;
-    if (n.d >= 2 && rnd() < 0.08 + 0.02 * n.d) continue;            // abandoned path
-    const k = n.d === 0 ? 3 : n.d >= 3 ? (rnd() < 0.5 ? 1 : 2) : rnd() < 0.3 ? 1 : 2;
+    if (n.d >= 3 && rnd() < 0.06 + 0.02 * (n.d - 3)) continue;      // pruned on the way
+    const k = n.d === 0 ? 3 : n.d >= 4 ? (rnd() < 0.25 ? 1 : 2) : rnd() < 0.35 ? 1 : rnd() < 0.75 ? 2 : 3;
     for (let c = 0; c < k; c++) {
       const col = (cols[n.d + 1] = cols[n.d + 1] || []);
       if (col.length >= perCol) break;
@@ -1554,7 +1554,7 @@ function introTree(canvas, isDone) {
       const y = Math.max(H * 0.06, Math.min(H * 0.94, n.y + off + (rnd() - 0.5) * 18));
       if (col.some((v) => Math.abs(v - y) < gap)) continue;
       col.push(y);
-      nodes.push({ x: x0 + (n.d + 1) * dx, y, d: n.d + 1, p: i, spread: n.spread * 0.62 });
+      nodes.push({ x: x0 + (n.d + 1) * dx, y, d: n.d + 1, p: i, spread: n.spread * 0.55 });
     }
   }
   // spread the columns over the full width, however deep the tree got
