@@ -672,14 +672,12 @@
         <div class="panel-head">
           <div><h3>Resolved rate as the test-time budget grows</h3><div class="sub">SWE-bench Verified · gpt-5-mini · budget = expansion limit</div></div>
           <div class="tools">
-            <label class="check"><input type="checkbox" id="ceil" checked /> candidate-pool ceiling</label>
             <div class="seg" data-view="scaling"><button class="on" data-v="chart">Chart</button><button data-v="table">Table</button></div>
           </div>
         </div>
         <div class="legend" id="lg-scaling"></div>
         <div class="chart" id="ch-scaling"></div>
         <div class="tblview" id="tb-scaling"></div>
-        <p class="note">The dashed ceiling counts a task as solvable if any candidate entering the first tournament round resolves it. It keeps rising (60.8% → 67.0% from budget 30 to 50), so the extra budget finds new solutions rather than re-ranking a fixed pool.</p>
       </div>
         <div class="panel">
           <div class="panel-head">
@@ -825,7 +823,6 @@ const SCALING = {
     { key: "search", name: "SWE-Search", color: "var(--s-search)", dash: "7 4", marker: "square", y: [43.0, 51.2, 54.2, 54.8, 54.8] },
     { key: "mini", name: "mini-SWE-agent", color: "var(--s-mini)", dash: "2 3", marker: "diamond", y: [19.6, 45.4, 51.6, 52.6, 53.2] },
   ],
-  ceiling: [48.8, 53.4, 60.8, 63.8, 67.0],
   swexCost: [0.028, 0.046, 0.095, 0.117, 0.137],
   swexTime: [3.72, 5.96, 12.36, 15.28, 18.32],
 };
@@ -1283,7 +1280,6 @@ const PG = (() => {
    ===================================================================================================================== */
 function drawScaling() {
   const box = $("#ch-scaling"), W = 620, H = 400, m = { l: 44, r: 150, t: 14, b: 40 };
-  const showCeil = $("#ceil").checked;
   box.innerHTML = "";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Line chart of resolved rate versus budget" }, box);
   const x = (b) => m.l + ((b - 10) / 40) * (W - m.l - m.r);
@@ -1298,10 +1294,6 @@ function drawScaling() {
   el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, class: "base" }, ax);
 
   const all = [...SCALING.series];
-  if (showCeil) {
-    const c = SCALING.ceiling;
-    el("path", { d: c.map((v, i) => `${i ? "L" : "M"}${x(SCALING.budgets[i])} ${y(v)}`).join(""), style: "fill:none;stroke:var(--s-swex);stroke-width:1.5;stroke-dasharray:3 4;opacity:.75" }, svg);
-  }
   for (const s of all) {
     el("path", { d: s.y.map((v, i) => `${i ? "L" : "M"}${x(SCALING.budgets[i])} ${y(v)}`).join(""), style: `fill:none;stroke:${s.color};stroke-width:${s.key === "swex" ? 2.5 : 2}`, "stroke-dasharray": s.dash || null, "stroke-linejoin": "round" }, svg);
     const g = el("g", {}, svg);
@@ -1309,11 +1301,10 @@ function drawScaling() {
   }
   // direct labels at the right end, de-collided
   const labels = all.map((s) => ({ s, v: s.y[4], y: y(s.y[4]) }));
-  if (showCeil) labels.push({ s: { name: "pool ceiling", color: "var(--s-swex)" }, v: SCALING.ceiling[4], y: y(SCALING.ceiling[4]), ceil: true });
   labels.sort((a, b) => a.y - b.y);
   for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 16) labels[i].y = labels[i - 1].y + 16;
   for (const L of labels) {
-    const t = el("text", { x: x(50) + 12, y: L.y + 4, class: L.ceil ? "dl2" : "dl" }, svg);
+    const t = el("text", { x: x(50) + 12, y: L.y + 4, class: "dl" }, svg);
     t.textContent = `${L.s.name}  ${fmt1(L.v)}%`;
   }
   // hover layer
@@ -1327,7 +1318,6 @@ function drawScaling() {
     cross.setAttribute("x1", bx); cross.setAttribute("x2", bx); cross.style.opacity = 1;
     let html = `<div class="tt">Budget ${SCALING.budgets[i]}</div>`;
     for (const s of all) html += `<div class="row"><span class="sw" style="background:${s.color}"></span>${nameHtml(s.name)}<span class="v">${fmt1(s.y[i])}%</span></div>`;
-    if (showCeil) html += `<div class="row"><span class="sw" style="background:transparent;border:1.5px dashed var(--s-swex)"></span>pool ceiling<span class="v">${fmt1(SCALING.ceiling[i])}%</span></div>`;
     html += `<div class="row muted" style="margin-top:4px">SWE-X cost / time<span class="v">$${SCALING.swexCost[i].toFixed(3)} · ${SCALING.swexTime[i].toFixed(1)}m</span></div>`;
     tip.innerHTML = html;
     const [px, py] = toPx(svg, box, bx, y(SCALING.series[0].y[i]));
@@ -1336,11 +1326,10 @@ function drawScaling() {
   hit.addEventListener("pointermove", move);
   hit.addEventListener("pointerleave", () => { tip.classList.remove("on"); cross.style.opacity = 0; });
 
-  $("#lg-scaling").innerHTML = SCALING.series.map(legendItem).join("") +
-    (showCeil ? `<span><svg viewBox="0 0 22 12"><line x1="0" y1="6" x2="22" y2="6" style="stroke:var(--s-swex)" stroke-width="1.5" stroke-dasharray="3 4"/></svg>candidate-pool ceiling</span>` : "");
-  $("#tb-scaling").innerHTML = table(["Budget", "SWE-Xplorer", "SWE-Search", "mini-SWE-agent", "Pool ceiling", "SWE-X cost", "SWE-X time"],
+  $("#lg-scaling").innerHTML = SCALING.series.map(legendItem).join("");
+  $("#tb-scaling").innerHTML = table(["Budget", "SWE-Xplorer", "SWE-Search", "mini-SWE-agent", "SWE-X cost", "SWE-X time"],
     SCALING.budgets.map((b, i) => [b, fmt1(SCALING.series[0].y[i]) + "%", fmt1(SCALING.series[1].y[i]) + "%", fmt1(SCALING.series[2].y[i]) + "%",
-      fmt1(SCALING.ceiling[i]) + "%", "$" + SCALING.swexCost[i].toFixed(3), SCALING.swexTime[i].toFixed(1) + " min"]));
+      "$" + SCALING.swexCost[i].toFixed(3), SCALING.swexTime[i].toFixed(1) + " min"]));
 }
 
 /* =====================================================================================================================
@@ -1504,7 +1493,6 @@ $$(".seg[data-view]").forEach((sg) => segment(sg, "v", (v) => {
 }));
 segment($("#sc-x"), "x", (v) => { scatterX = v; drawScatter(); });
 segment($("#bench"), "b", (v) => { bench = v; drawBars(); });
-$("#ceil").addEventListener("change", drawScaling);
 
 
 segment($("#cmd-tabs"), "c", (v) => $$(".codeblock[data-c]").forEach((c) => (c.style.display = c.dataset.c === v ? "" : "none")));
