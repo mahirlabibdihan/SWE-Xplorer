@@ -1539,23 +1539,27 @@ function introTree(canvas, isDone) {
   const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
   canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
   let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  // a triangle: each column holds more nodes over a wider span; children attach to the nearest live parent,
-  // so edges fan out without crossing, and some nodes past the third column are pruned (no children)
+  // columns widen quickly near the root, then level off; children attach to the nearest live parent,
+  // so edges fan out without crossing, and some nodes are pruned (no children) or left out
   const D = W < 700 ? 6 : 8, x0 = W * 0.06, step = (W * 0.9) / D, midY = H * 0.5;
-  const maxCol = Math.max(6, Math.floor((H * 0.86) / 30));
+  const maxCol = Math.max(6, Math.floor((H * 0.86) / 40));
   const nodes = [{ x: x0, y: midY, d: 0, p: -1, live: true }];
   let prev = [0];
   for (let d = 1; d <= D; d++) {
-    const n = Math.round(1 + (maxCol - 1) * Math.pow(d / D, 0.85)), half = H * 0.44 * Math.pow(d / D, 0.9);
+    const grow = (e) => 1 - Math.pow(1 - d / D, e);   // fast near the root, then levelling off
+    const n = Math.max(2, Math.round(maxCol * grow(1.7))), half = H * 0.42 * grow(2.2);
     let live = prev.filter((i) => nodes[i].live); if (!live.length) live = prev;
     const col = [];
     for (let j = 0; j < n; j++) {
       const slot = n === 1 ? 0 : (2 * j) / (n - 1) - 1;
-      const y = midY + slot * half + (n > 1 ? (rnd() - 0.5) * (half / (n - 1)) * 0.6 : 0);
-      let p = live[0], best = Infinity;
-      for (const i of live) { const dy = Math.abs(nodes[i].y - y); if (dy < best) { best = dy; p = i; } }
+      if (d >= 3 && rnd() < 0.18) continue;            // leave some gaps
+      const y = midY + slot * half + (n > 1 ? (rnd() - 0.5) * (half / (n - 1)) * 1.1 : 0);
+      let p = live[0], best = Infinity;   // nearest live parent with room (at most 3 children)
+      for (const i of live) { const dy = Math.abs(nodes[i].y - y) + ((nodes[i].kids || 0) >= 3 ? 1e6 : 0); if (dy < best) { best = dy; p = i; } }
+      if (d >= 2 && best > Math.max(60, step * 0.55)) continue;   // no parent nearby: leave the space empty
+      nodes[p].kids = (nodes[p].kids || 0) + 1;
       col.push(nodes.length);
-      nodes.push({ x: x0 + d * step + (rnd() - 0.5) * step * 0.18, y, d, p, live: d < 3 || rnd() > 0.16 });
+      nodes.push({ x: x0 + d * step + (rnd() - 0.5) * step * 0.32, y, d, p, live: d < 2 || rnd() > 0.24 });
     }
     prev = col;
   }
