@@ -1564,8 +1564,14 @@ function introTree(canvas, isDone) {
     prev = col;
   }
   const deepest = D;
-  // the winning path: the deepest leaf closest to the vertical middle
-  let w = nodes.filter((n) => n.d === deepest).sort((a, b) => Math.abs(a.y - H / 2) - Math.abs(b.y - H / 2))[0];
+  // the winning path follows a gentle S-curve: in each column take the node nearest the curve and link it to the previous pick
+  const target = (d) => H / 2 + H * 0.2 * Math.sin((d / deepest) * Math.PI * 1.6 + 0.35) * Math.min(1, d / 2);
+  let w = nodes[0];
+  for (let d = 1; d <= deepest; d++) {
+    const col = nodes.filter((n) => n.d === d); if (!col.length) break;
+    const pick = col.reduce((a, b) => (Math.abs(b.y - target(d)) < Math.abs(a.y - target(d)) ? b : a));
+    pick.p = nodes.indexOf(w); w = pick;
+  }
   const win = new Set(); for (let i = nodes.indexOf(w); i >= 0; i = nodes[i].p) win.add(i);
   nodes.forEach((n, i) => { n.t = 0.15 + (i / nodes.length) * 2.0 + rnd() * 0.15; n.win = win.has(i); });
   const t0 = performance.now(), cx = W / 2, cy = H / 2, R = Math.hypot(W, H) / 2;
